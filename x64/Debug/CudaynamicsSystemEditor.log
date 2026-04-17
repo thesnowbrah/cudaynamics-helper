@@ -1,0 +1,8 @@
+﻿  WriteToFiles.cpp
+  main.cpp
+C:\Users\nasty\Desktop\cudaynamics\CudaynamicsSystemEditor\CudaynamicsSystemEditor\main.cpp(171,68): warning C4566: character represented by universal-character-name '\u2713' cannot be represented in the current code page (1251)
+C:\Users\nasty\Desktop\cudaynamics\CudaynamicsSystemEditor\CudaynamicsSystemEditor\main.cpp(178,68): warning C4566: character represented by universal-character-name '\u2713' cannot be represented in the current code page (1251)
+  Generating Code...
+  CudaynamicsSystemEditor.vcxproj -> C:\Users\nasty\Desktop\cudaynamics\CudaynamicsSystemEditor\CudaynamicsSystemEditor\x64\Debug\CudaynamicsSystemEditor.exe
+  "pwsh.exe" не является внутренней или внешней
+  командой, исполняемой программой или пакетным файлом.
