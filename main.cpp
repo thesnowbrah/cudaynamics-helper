@@ -4,10 +4,10 @@
 
 #pragma once
 
-#include "imgui-master/imgui.h"
-#include "imgui-master/misc/cpp/imgui_stdlib.h"
-#include "imgui-master/backends/imgui_impl_win32.h"
-#include "imgui-master/backends/imgui_impl_dx11.h"
+#include "imgui/imgui.h"
+#include "imgui/misc/cpp/imgui_stdlib.h"
+#include "imgui/backends/imgui_impl_win32.h"
+#include "imgui/backends/imgui_impl_dx11.h"
 #include <d3d11.h>
 #include <tchar.h>
 #include <vector>
@@ -165,18 +165,11 @@ int main(int, char**)
             }
             ImGui::PopFont();
 
-            // Show feedback when buttons are clicked
-            if (createButton_clicked)
-            {
-                ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "✓ Button 1 was clicked!");
-                
-
-            }
 
             if (button2_clicked)
             {
                 ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.0f, 1.0f), "✓ Button 2 was clicked!");
-                button2_clicked = false;  // Reset for next frame
+                button2_clicked = false; 
             }
 
             if (exitButton_clicked)
@@ -194,6 +187,7 @@ int main(int, char**)
                 }
                 varAmount = 0;
                 systemName = "";
+                valuesNotCorrect = false;
             }
             ImGui::SameLine();
             ImGui::PushFont(font_large);
@@ -206,7 +200,7 @@ int main(int, char**)
             ImGui::Separator();
 
             ImGui::Text("System Name: "); ImGui::SameLine();
-            ImGui::InputText("##SystemNameTextID", &systemName);
+            ImGui::InputText("##SystemNameTextID", &systemName); ImGui::SameLine(); ImGui::Text("System");
             ImGui::Text(" ");
             
             for (int i = 0; i < varAmount; i++) {
@@ -270,6 +264,7 @@ int main(int, char**)
             float buttonWidth = 80.0f;
             ImGui::SetCursorPosX((ImGui::GetWindowWidth() - buttonWidth - ImGui::GetStyle().ItemSpacing.x) * 0.9f);
             if (ImGui::Button("Create", ImVec2(buttonWidth, 50.0f))) {
+                valuesNotCorrect = false;
                 if (varAmount < 1)valuesNotCorrect = true;
                 if (!valuesNotCorrect) valuesNotCorrect = checkNameCorrectness(systemName);
                 if(!valuesNotCorrect)
@@ -290,7 +285,18 @@ int main(int, char**)
                 
                 if (!valuesNotCorrect) {
                     valuesNotCorrect = false;
-                    MakeTextFile(systemName, varNames, varEqs, varAmount);
+
+                    systemStruct systemData;
+                    systemData.systemNameTXT = systemName;
+                    systemData.varNames = varNames;
+                    systemData.varEqs = varEqs;
+                    
+                    mainDataProcess(&systemData);
+
+                    WriteTXT(systemData);
+                    WriteCuFile(systemData);
+                    WriteHFile(systemData);
+
                     createButton_clicked = false;
                     for (int i = 0; i < varAmount; i++) {
                         varNames.pop_back();
@@ -349,7 +355,7 @@ bool checkNameCorrectness(std::string line) {
 bool checkEqsCorrectness(std::string line) {
     if (line.size() == 0) return 1;
     for (int i = 0; i < line.size(); i++) {
-        if (line[i]<32 || (line[i] >32 && line[i] < 37) || line[i] == 39 || line[i] == 44 || line[i] == 46 || (line[i]>57 && line[i] < 60) || line[i] == 64 || (line[i]>90 && line[i] < 97) || line[i] > 122) return 1;
+        if (line[i]<32 || (line[i] >32 && line[i] < 37) || line[i] == 39 || line[i] == 46 || (line[i]>57 && line[i] < 60) || line[i] == 64 || (line[i]>90 && line[i] < 97) || line[i] > 122) return 1;
     }
     return 0;
 }

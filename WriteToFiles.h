@@ -4,4 +4,7 @@
 
 void WriteTXT(systemStruct systemData);
 void WriteHFile(systemStruct systemData);
-void WriteCPPFile(systemStruct systemData);
+void WriteCuFile(systemStruct systemData);
+
+std::string ChangeEqsToKernelExplicitEuler(systemStruct systemData, std::string original);
+std::string ChangeEqsToKernelExplicitMidpoint(systemStruct systemData, std::string original);

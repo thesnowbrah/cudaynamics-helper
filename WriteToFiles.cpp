@@ -1,7 +1,7 @@
 #include "WriteToFiles.h"
 
 void WriteTXT(systemStruct systemData) {
-	std::ofstream OutputTXT(systemData.systemNameCode +".txt");
+	std::ofstream OutputTXT("systems/" + systemData.systemNameCode + ".txt");
 	OutputTXT << "Name: " << systemData.systemNameTXT << "\n" << "Steps: 10000\n"<< "Transient: 10000\n";
 	OutputTXT << "// Defining step: \n"
 		<< "// parameter/variable/discrete\n"
@@ -9,7 +9,7 @@ void WriteTXT(systemStruct systemData) {
 		<< "// If it is discrete, add nothing after\n";
 	OutputTXT << "Step type: parameter h Fixed 0.01 0.1 0.01 100 0.0 0.0\n";
 	OutputTXT << "// Compute on CUDAynamics launch: yes/no\n"
-		<< "Execute on launch : yes\n"
+		<< "Execute on launch: yes\n"
 		<< "// Ranging types:\n"
 		<< "// Fixed (single <minimum value>)\n"
 		<< "// Linear (<step count> values uniformly distributed between <minimum value> and <maximum value>, inclusively)\n"
@@ -20,43 +20,43 @@ void WriteTXT(systemStruct systemData) {
 		<< "// Defining variables/parameters:\n"
 		<< "// var/param <name> <ranging type> <minimum value> <maximum value> <step> <step count> <normal mean> <normal deviation>\n";
 	for (int i = 0; i < systemData.varNames.size(); i++) {
-		OutputTXT << "var" << systemData.varNames[i] << "Fixed 0.0 10.0 1.0 50 0.0 0.0\n";
+		OutputTXT << "var " << systemData.varNames[i] << " Fixed 0.0 10.0 1.0 50 0.0 0.0\n";
 	}
 	for (int i = 0; i < systemData.parameters.size(); i++) {
-		OutputTXT << "param" << systemData.parameters[i] << "Fixed 0.0 10.0 1.0 50 0.0 0.0\n";
+		OutputTXT << "param " << systemData.parameters[i] << " Fixed 0.0 10.0 1.0 50 0.0 0.0\n";
 	}
 	//when VSCD is ready add symmetry param
 
 	OutputTXT << "// Defining enumerated parameters (useful for methods):\n"
 		<< "// enum <name> <ranging type> <minimum value> <maximum value> <step> <step count> <normal mean> <normal deviation> <enum names, no spaces>\n"
-		<< "enum method 0ExplicitEuler 0ExplicitMidpoint 0ExplicitRungeKutta4 1VariableSymmetryCD\n"
+		<< "enum method 1ExplicitEuler 0ExplicitMidpoint 0ExplicitRungeKutta4\n" // ADD VSCD LATER
 		<< "//\n"
 		<< "// Defining settings for analysis functions:\n"
 		<< "// analysis <name from \"anfunc_names.cpp\"> settings <values, must exactly match the settings struct> \n"
 		<< "analysis Minimum / maximum settings 2 2\n"
-		<< "analysis Largest Lyapunov exponent settings 0.01 30 0 0 1 2 - 1\n";
+		<< "analysis Largest Lyapunov exponent settings 0.01 30 0 0 1 2 -1\n";
 
 	OutputTXT.close();
 
 }
 
 void WriteHFile(systemStruct systemData) {
-	std::ofstream OutputTXT(systemData.systemNameCode + ".h");
+	std::ofstream OutputTXT("systems/" + systemData.systemNameCode + ".h");
 	OutputTXT << "#pragma once\n#include <kernels_common.h>\n\n"
-		<< "#define name" << systemData.systemNameCode << "\n\n"
+		<< "#define name " << systemData.systemNameCode << "\n\n"
 		<< "const int THREADS_PER_BLOCK_(name) = 64;\n\n"
 		<< "__global__ void gpu_wrapper_(name)(Computation* data, uint64_t variation);\n\n"
 		<< "__host__ __device__ void kernelProgram_(name)(Computation* data, uint64_t variation);\n\n"
-		<< "__host__ __device__ __forceinline__ void finiteDifferenceScheme_(name)(numb* currentV, numb* nextV, numb* parameters);\n\n"
+		<< "__host__ __device__ __forceinline__ void finiteDifferenceScheme_(name)(numb* currentV, numb* nextV, numb* parameters, PerThread* pt);\n\n"
 		<< "#undef name\n\n";
 
 	OutputTXT.close();
 }
 
-void WriteCPPFile(systemStruct systemData) {
-	std::ofstream OutputTXT(systemData.systemNameCode + ".cpp");
+void WriteCuFile(systemStruct systemData) {
+	std::ofstream OutputTXT("systems/" + systemData.systemNameCode + ".cu");
 	OutputTXT << "#include \"" + systemData.systemNameCode + ".h \"\n";
-	OutputTXT << "#define name" << systemData.systemNameCode << "\n\n";
+	OutputTXT << "#define name " << systemData.systemNameCode << "\n\n";
 
 	OutputTXT << "namespace attributes\n{\n";
 
@@ -74,29 +74,163 @@ void WriteCPPFile(systemStruct systemData) {
 	OutputTXT << "method, COUNT };\n";
 
 	OutputTXT << "enum methods { ";
-	OutputTXT << "ExplicitEuler, ExplicitMidpoint, ExplicitRungeKutta4 };\n}\n\n";//, VariableSymmetryCD
+	OutputTXT << "ExplicitEuler, ExplicitMidpoint, ExplicitRungeKutta4 };\n}\n\n";// VariableSymmetryCD  not added yet, add later
 
 	OutputTXT << "__global__ void gpu_wrapper_(name)(Computation* data, uint64_t variation)\n"
-		<< "{\nkernelProgram_(name)(data, (blockIdx.x* blockDim.x) + threadIdx.x);\n}\n";
+		<< "{\n    kernelProgram_(name)(data, (blockIdx.x* blockDim.x) + threadIdx.x);\n}\n";
 
 	OutputTXT << "__host__ __device__ void kernelProgram_(name)(Computation* data, uint64_t variation)\n{\n"
-		<< "if (variation >= CUDA_marshal.totalVariations) return;   // Shutdown thread if there isn't a variation to compute\n"
-		<< "uint64_t stepStart, variationStart = variation * CUDA_marshal.variationSize;         // Start index to store the modelling data for the variation\n"
-		<< "LOCAL_BUFFERS;\nLOAD_ATTRIBUTES(false);\n"
-		<< "// Custom area (usually) starts here\n"
-		<< "TRANSIENT_SKIP_NEW(finiteDifferenceScheme_(name));\n"
-		<< "for (int s = 0; s < CUDA_kernel.steps && !data->isHires; s++)\n{\n"
-		<< "stepStart = variationStart + s * CUDA_kernel.VAR_COUNT;\n"
-		<< "finiteDifferenceScheme_(name)(FDS_ARGUMENTS);\nRECORD_STEP;\n}\n\n"
-		<< "// Analysis\nAnalysisLobby(data, &finiteDifferenceScheme_(name), variation);\n}\n";
+		<< "    if (variation >= CUDA_marshal.totalVariations) return;   // Shutdown thread if there isn't a variation to compute\n"
+		<< "    uint64_t stepStart, variationStart = variation * CUDA_marshal.variationSize;         // Start index to store the modelling data for the variation\n"
+		<< "    LOCAL_BUFFERS;\n    LOAD_ATTRIBUTES(false);\n"
+		<< "    // Custom area (usually) starts here\n"
+		<< "    TRANSIENT_SKIP_NEW(finiteDifferenceScheme_(name));\n"
+		<< "    for (int s = 0; s < CUDA_kernel.steps && !data->isHires; s++)\n    {\n"
+		<< "        stepStart = variationStart + s * CUDA_kernel.VAR_COUNT;\n"
+		<< "        finiteDifferenceScheme_(name)(FDS_ARGUMENTS);\n        RECORD_STEP;\n    }\n\n"
+		<< "    // Analysis\n    AnalysisLobby(data, &finiteDifferenceScheme_(name), variation);\n}\n";
 		
-	OutputTXT << "__host__ __device__ __forceinline__ void finiteDifferenceScheme_(name)(numb* currentV, numb* nextV, numb* parameters)\n{\n"
-		<< "ifMETHOD(P(method), ExplicitEuler)\n{\n";
+	OutputTXT << "__host__ __device__ __forceinline__ void finiteDifferenceScheme_(name)(numb* currentV, numb* nextV, numb* parameters, PerThread* pt)\n{\n\n";
+
+	//			EXPLICIT EULER
+	OutputTXT << "    ifMETHOD(P(method), ExplicitEuler)\n   {\n";
+
 	for (int i = 0; i < systemData.varNames.size(); i++) {
-		OutputTXT << "Vnext(" << systemData.varNames[i] << ") = ";
-		///////OUTPUT OF EQUATIONS WITH V(X) AND P(X) REPLACED FIRST
+		OutputTXT << "        Vnext(" << systemData.varNames[i] << ") = V(" << systemData.varNames[i] << ")" << " + H * (" << ChangeEqsToKernelExplicitEuler(systemData, systemData.varEqs[i]) << ");\n";
 	}
+
+	OutputTXT << "    }\n\n";
+	//			EXPLICIT EULER
+
+	//			EXPLICIT MIDPOINT
+	OutputTXT << "    ifMETHOD(P(method), ExplicitMidpoint)\n   {\n";
+
+	for (int i = 0; i < systemData.varNames.size(); i++) {
+		OutputTXT << "        numb " << systemData.varNames[i] << "mp = V(" << systemData.varNames[i] << ")" << " + (numb)0.5 * H * (" << ChangeEqsToKernelExplicitEuler(systemData, systemData.varEqs[i]) << ");\n";
+	}
+
+	for (int i = 0; i < systemData.varNames.size(); i++) {
+		OutputTXT << "        numb " << systemData.varNames[i] << "mp = V(" << systemData.varNames[i] << ")" << " + H * (" << ChangeEqsToKernelExplicitMidpoint(systemData, systemData.varEqs[i]) << ");\n";
+	}
+
+	OutputTXT << "    }\n\n";
+	//			EXPLICIT MIDPOINT
+
 
 	OutputTXT << "}\n";
 
+
+	OutputTXT.close();
+}
+
+std::string ChangeEqsToKernelExplicitEuler(systemStruct systemData, std::string original) {
+		std::string result = "";
+		bool nameOrFunc = false;
+		bool varOrParFound = false;
+		std::string tempStr = "";
+		for (int i = 0; i < original.size(); i++) {
+			if (original[i] < 48 || (original[i] >= 48 && original[i] <= 57 && !nameOrFunc) || (original[i] <= 64 && original[i] >= 58) || (original[i] > 122)) {
+				
+				if (nameOrFunc) {
+					if (tempStr != "") {
+						for (int var = 0; var < systemData.varNames.size(); var++) {
+							if (tempStr == systemData.varNames[var]) {
+								result += "V("; result += tempStr; result += ")"; varOrParFound = true; break;
+							}
+						}
+						for (int par = 0; par < systemData.parameters.size(); par++) {
+							if (tempStr == systemData.parameters[par]) {
+								result += "P("; result += tempStr; result += ")"; varOrParFound = true; break;
+							}
+						}
+					}
+					if (!varOrParFound) {
+						result += tempStr;
+					}
+					else varOrParFound = false;
+					nameOrFunc = false;
+					tempStr = "";
+				}
+				result += original[i];
+			}
+			else if (original[i] >= 48 && original[i] <= 57 && nameOrFunc || (original[i] >= 65 && original[i] <= 90) || (original[i] >= 97 && original[i] <= 122)) {
+				nameOrFunc = true;
+				tempStr += original[i];
+				if (i == original.size() - 1) {
+					for (int var = 0; var < systemData.varNames.size(); var++) {
+						if (tempStr == systemData.varNames[var]) {
+							result += "V("; result += tempStr; result += ")"; varOrParFound = true; break;
+						}
+					}
+					for (int par = 0; par < systemData.parameters.size(); par++) {
+						if (tempStr == systemData.parameters[par]) {
+							result += "P("; result += tempStr; result += ")"; varOrParFound = true; break;
+						}
+					}
+					if (!varOrParFound) {
+						result += tempStr;
+					}
+					else varOrParFound = false;
+				}
+
+			}
+		}
+	
+	return result;
+}
+
+std::string ChangeEqsToKernelExplicitMidpoint(systemStruct systemData, std::string original) {
+	std::string result = "";
+	bool nameOrFunc = false;
+	bool varOrParFound = false;
+	std::string tempStr = "";
+	for (int i = 0; i < original.size(); i++) {
+		if (original[i] < 48 || (original[i] >= 48 && original[i] <= 57 && !nameOrFunc) || (original[i] <= 64 && original[i] >= 58) || (original[i] > 122)) {
+
+			if (nameOrFunc) {
+				if (tempStr != "") {
+					for (int var = 0; var < systemData.varNames.size(); var++) {
+						if (tempStr == systemData.varNames[var]) {
+							 result += tempStr; result += "mp"; varOrParFound = true; break;
+						}
+					}
+					for (int par = 0; par < systemData.parameters.size(); par++) {
+						if (tempStr == systemData.parameters[par]) {
+							result += "P("; result += tempStr; result += ")"; varOrParFound = true; break;
+						}
+					}
+				}
+				if (!varOrParFound) {
+					result += tempStr;
+				}
+				else varOrParFound = false;
+				nameOrFunc = false;
+				tempStr = "";
+			}
+			result += original[i];
+		}
+		else if (original[i] >= 48 && original[i] <= 57 && nameOrFunc || (original[i] >= 65 && original[i] <= 90) || (original[i] >= 97 && original[i] <= 122)) {
+			nameOrFunc = true;
+			tempStr += original[i];
+			if (i == original.size() - 1) {
+				for (int var = 0; var < systemData.varNames.size(); var++) {
+					if (tempStr == systemData.varNames[var]) {
+						result += tempStr; result += "mp"; varOrParFound = true; break;
+					}
+				}
+				for (int par = 0; par < systemData.parameters.size(); par++) {
+					if (tempStr == systemData.parameters[par]) {
+						result += "P("; result += tempStr; result += ")"; varOrParFound = true; break;
+					}
+				}
+				if (!varOrParFound) {
+					result += tempStr;
+				}
+				else varOrParFound = false;
+			}
+
+		}
+	}
+
+	return result;
 }

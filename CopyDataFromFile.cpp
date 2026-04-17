@@ -11,20 +11,21 @@ std::string CleanupNameForCode(std::string original) {
 }
 
 std::string CleanupEqsForCode(std::string original) {
-	std::string result;
+	std::string result = "";
 	std::string strTemp;
 
 	int replacingPow = 0;
 
 	if (original == "Signal") return "Signal";
 
-	if (original[0] > 47 && original[0] < 72) { result = "(numb)"; result += original[0]; }
+	if (original[0] > 47 && original[0] < 58) { result = "(numb)"; result += original[0]; }
 	else { result = original[0]; }
 	for (int i = 1; i < original.size(); i++) {
-		if ((original[i - 1] != 46 && original[i - 1] != 91 && (original[i - 1] < 48 || original[i - 1] > 57)) && (original[i] > 47 && original[i] < 58)) {
+		if ((original[i - 1] != 46 && original[i - 1] != 91 && (original[i - 1] < 48 || original[i - 1] > 57) && (original[i - 1] < 65 || original[i - 1] > 90) && (original[i - 1] < 97 || original[i - 1] > 122)) && (original[i] > 47 && original[i] < 58)) {
 			result += "(numb)"; result += original[i];
 		}
-		if (i >= 3) {
+		else result += original[i];
+		/*if (i >= 3) {
 			if (result[i]=='(' && result[i-1] == 'w'&& result[i-2] == 'o'&& result[i-3] == 'p') {
 				replacingPow = 0;
 				strTemp = "";
@@ -48,7 +49,7 @@ std::string CleanupEqsForCode(std::string original) {
 					}
 				}
 			}
-		}
+		}*/
 	}
 	return result;
 }
@@ -68,16 +69,17 @@ int findingParameters(systemStruct *systemData) {
 
 			}
 			else {
-				if ((systemData->varEqs[i][j] > 96 && systemData->varEqs[i][j] < 123) || (systemData->varEqs[i][j] > 64 && systemData->varEqs[i][j] < 91) || (systemData->varEqs[i][j] > 47 && systemData->varEqs[i][j] < 58) || systemData->varEqs[i][j] == 45 || systemData->varEqs[i][j] == 95) {
+				if ((systemData->varEqs[i][j] > 96 && systemData->varEqs[i][j] < 123) || (systemData->varEqs[i][j] > 64 && systemData->varEqs[i][j] < 91) || (systemData->varEqs[i][j] > 47 && systemData->varEqs[i][j] < 58) || systemData->varEqs[i][j] == 95) {
 					tempCounter++;
 					tempStr += systemData->varEqs[i][j];
 				}
 				else {
 					timeToCheck = true;
+					tempCounter = 0;
 				}
 			}
 
-			if (timeToCheck) {
+			if (timeToCheck || j == systemData->varEqs.size() - 1) {
 				if (tempStr!="log" && tempStr != "fabs" && tempStr != "exp" && tempStr != "pow" && tempStr != "sin" && tempStr != "cos" && tempStr != "fmod") {
 					bool isVarOrPar = false;
 					for (int var = 0; var < systemData->varNames.size(); var++) {
@@ -89,10 +91,11 @@ int findingParameters(systemStruct *systemData) {
 						if (tempStr == systemData->parameters[par]) { isVarOrPar = true; break; }
 					}
 
-					if (!isVarOrPar) { systemData->parameters.push_back(tempStr); }
+					if (!isVarOrPar && tempStr!="") { systemData->parameters.push_back(tempStr); }
 				}
 				tempStr = "";
 				tempCounter = 0;
+				timeToCheck = false;
 			}
 
 		}
@@ -122,8 +125,18 @@ int checkForSignalVars(systemStruct* systemData) {
 	return 0;
 }
 
-void mainDataProcess() {
-	systemStruct systemData;
 
+
+void mainDataProcess(systemStruct* systemData) {
+	(*systemData).systemNameCode = CleanupNameForCode(systemData->systemNameTXT);
+	for (int i = 0; i < systemData->varEqs.size(); i++) {
+		(*systemData).varNamesCode.push_back(CleanupNameForCode((*systemData).varNames[i]));
+	}
+	findingParameters(systemData);
+	checkForSignalVars(systemData);
+	for (int i = 0; i < systemData->varEqs.size(); i++) {
+		(*systemData).varEqs[i] = CleanupEqsForCode((*systemData).varEqs[i]);
+	}
 
 }
+
