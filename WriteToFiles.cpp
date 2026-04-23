@@ -398,6 +398,11 @@ void WriteCuFile(systemStruct systemData) {
 			if(systemData.varEqs[i] != "Time" && systemData.varEqs[i] != "signal")
 			{
 			//		MAKE A FUNCTION THAT WOULD FIND AND SOLVE IMPLICITNESS
+				
+				bool simpleIterations = false;
+				std::string solvedImplicitness = ChangeEqsToSolveImplicitness(systemData, systemData.varEqs[i], &simpleIterations, i);
+
+				OutputTXT << "        Vnext(" << systemData.varNames[i] << ") = V(" << systemData.varNames[i] << ")" << " + h1 * (" << ChangeEqsToKernelSemiExplicit(systemData, systemData.varEqs[i], i) << ");\n";
 			}
 		}
 
@@ -599,6 +604,133 @@ std::string ChangeEqsToKernelSemiExplicit(systemStruct systemData, std::string o
 			}
 
 		}
+	}
+
+	return result;
+}
+
+std::string ChangeEqsToSolveImplicitness(systemStruct systemData, std::string original, bool* simpleIterations, int eqNum) {
+	std::string result = "";
+	bool nameOrFunc = false;
+	bool varOrParFound = false;
+	std::string tempStr = "";
+	
+	bool implicitnessFound = false;
+
+
+	for (int i = 0; i < original.size(); i++) {
+		if (original[i] < 48 || (original[i] >= 48 && original[i] <= 57 && !nameOrFunc) || (original[i] <= 64 && original[i] >= 58) || (original[i] > 122)) {
+
+			if (nameOrFunc) {
+				if (tempStr != "") {
+					for (int var = 0; var < systemData.varNames.size(); var++) {
+						if (tempStr == systemData.varNames[var]) {
+							if (var >= eqNum) {
+								result += "V("; result += tempStr; result += ")"; varOrParFound = true; break;
+							}
+							else {
+								result += "Vnext("; result += tempStr; result += ")"; varOrParFound = true; break;
+							}
+						}
+					}
+					for (int par = 0; par < systemData.parameters.size(); par++) {
+						if (tempStr == systemData.parameters[par]) {
+							result += "P("; result += tempStr; result += ")"; varOrParFound = true; break;
+						}
+					}
+				}
+				if (!varOrParFound) {
+					result += tempStr;
+				}
+				else varOrParFound = false;
+				nameOrFunc = false;
+				tempStr = "";
+			}
+			result += original[i];
+		}
+		else if (original[i] >= 48 && original[i] <= 57 && nameOrFunc || (original[i] >= 65 && original[i] <= 90) || (original[i] >= 97 && original[i] <= 122)) {
+			nameOrFunc = true;
+			tempStr += original[i];
+			if (i == original.size() - 1) {
+				for (int var = 0; var < systemData.varNames.size(); var++) {
+					if (tempStr == systemData.varNames[var]) {
+						if (var == eqNum) {
+							implicitnessFound = true;
+						}
+						else if (var > eqNum) {
+							result += "Vnext("; result += tempStr; result += ")"; varOrParFound = true; break;
+						}
+						else {
+							result += tempStr; result += "mp"; varOrParFound = true; break;
+						}
+					}
+				}
+				for (int par = 0; par < systemData.parameters.size(); par++) {
+					if (tempStr == systemData.parameters[par]) {
+						result += "P("; result += tempStr; result += ")"; varOrParFound = true; break;
+					}
+				}
+				if (!varOrParFound) {
+					result += tempStr;
+				}
+				else varOrParFound = false;
+			}
+
+		}
+	}
+
+	if (!implicitnessFound) {
+		return result;
+	}
+	else {
+		bool inFunc = false;
+		varOrParFound = false;
+		nameOrFunc = false;
+		tempStr = "";
+		int perenthesisCount = 0;
+
+
+		//		THIS DOES NOT TAKE ACOUNT FOR POWERS OF THE VARIABLE DONE AS IN "X * X" OR  THINGS SUCH AS "1 / X"   /// NEED TO ADD CHECK
+		for (int i = 0; i < original.size(); i++) {
+			if (original[i] < 48 || (original[i] >= 48 && original[i] <= 57 && !nameOrFunc) || (original[i] <= 64 && original[i] >= 58) || (original[i] > 122)) {
+
+
+
+				if (nameOrFunc) {
+					if (tempStr != "") {
+						for (int var = 0; var < systemData.varNames.size(); var++) {
+							if (tempStr == systemData.varNames[var]) {
+								if (var == eqNum && inFunc) {
+									*simpleIterations = true; return result;
+								}
+							}
+						}
+						for (int par = 0; par < systemData.parameters.size(); par++) {
+							if (tempStr == systemData.parameters[par]) {
+
+							}
+						}
+					}
+					if (!varOrParFound && original[i] == '(') {
+						perenthesisCount--;
+						inFunc = true;
+					}
+					else varOrParFound = false;
+					nameOrFunc = false;
+					tempStr = "";
+				}
+				if (original[i] == ')')perenthesisCount++;
+				else if (original[i] == '(')perenthesisCount--;
+				
+				if (perenthesisCount == 0 && inFunc)inFunc = false;
+			}
+			else if (original[i] >= 48 && original[i] <= 57 && nameOrFunc || (original[i] >= 65 && original[i] <= 90) || (original[i] >= 97 && original[i] <= 122)) {
+				nameOrFunc = true;
+				tempStr += original[i];
+
+			}
+		}
+		//		THIS DOES NOT TAKE ACOUNT FOR POWERS OF THE VARIABLE DONE AS IN "X * X" OR  THINGS SUCH AS "1 / X"   /// NEED TO ADD CHECK
 	}
 
 	return result;

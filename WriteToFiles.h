@@ -9,3 +9,4 @@ void WriteCuFile(systemStruct systemData);
 std::string ChangeEqsToKernelExplicitEuler(systemStruct systemData, std::string original);
 std::string ChangeEqsToKernelExplicitMidpoint(systemStruct systemData, std::string original);
 std::string ChangeEqsToKernelSemiExplicit(systemStruct systemData, std::string original, int eqNum);
+std::string ChangeEqsToSolveImplicitness(systemStruct systemData, std::string original, bool* simpleIterations, int eqNum);
