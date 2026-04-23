@@ -16,7 +16,7 @@ std::string CleanupEqsForCode(std::string original) {
 
 	int replacingPow = 0;
 
-	if (original == "Signal") return "Signal";
+	if (original == "signal") return "signal";
 
 	if (original[0] > 47 && original[0] < 58) { result = "(numb)"; result += original[0]; }
 	else { result = original[0]; }
@@ -55,12 +55,18 @@ std::string CleanupEqsForCode(std::string original) {
 }
 
 int findingParameters(systemStruct *systemData) {
+
+	bool signalFound = false;
 	for (int i = 0; i < systemData->varEqs.size(); i++) {
 
 		std::string tempStr;
 		int tempCounter = 0;
 		bool timeToCheck = false;
+		if (systemData->varEqs[i] == "signal") {
+			continue;
+		}
 		for (int j = 0; j < systemData->varEqs[i].size(); j++) {
+			
 			if (tempCounter == 0) {
 				if ((systemData->varEqs[i][j]>96 && systemData->varEqs[i][j] < 123) || (systemData->varEqs[i][j] > 64 && systemData->varEqs[i][j] < 91)) {
 					tempCounter++;
@@ -79,8 +85,8 @@ int findingParameters(systemStruct *systemData) {
 				}
 			}
 
-			if (timeToCheck || j == systemData->varEqs.size() - 1) {
-				if (tempStr!="log" && tempStr != "fabs" && tempStr != "exp" && tempStr != "pow" && tempStr != "sin" && tempStr != "cos" && tempStr != "fmod") {
+			if (timeToCheck || j == systemData->varEqs[i].size() - 1) {
+				if (tempStr!="log" && tempStr != "fabs" && tempStr != "exp" && tempStr != "pow" && tempStr != "sin" && tempStr != "cos" && tempStr != "fmod" && tempStr != "signal") {
 					bool isVarOrPar = false;
 					for (int var = 0; var < systemData->varNames.size(); var++) {
 						if (tempStr == systemData->varNames[var]) { isVarOrPar = true; break; }
@@ -91,8 +97,11 @@ int findingParameters(systemStruct *systemData) {
 						if (tempStr == systemData->parameters[par]) { isVarOrPar = true; break; }
 					}
 
-					if (!isVarOrPar && tempStr!="") { systemData->parameters.push_back(tempStr); }
+					if (!isVarOrPar && tempStr!="") { 
+						systemData->parameters.push_back(tempStr); 
+					}
 				}
+				else if(tempStr == "signal")systemData->parameters.push_back("signal_param");
 				tempStr = "";
 				tempCounter = 0;
 				timeToCheck = false;
@@ -108,7 +117,7 @@ int findingParameters(systemStruct *systemData) {
 int checkForSignalVars(systemStruct* systemData) {
 	bool signalVarFound = false;
 	for (int i = 0; i < systemData->varEqs.size(); i++) {
-		if (systemData->varEqs[i] == "Signal") {
+		if (systemData->varEqs[i] == "signal") {
 			signalVarFound = true;
 			systemData->parameters.push_back(systemData->varNames[i] + "dc");
 			systemData->parameters.push_back(systemData->varNames[i] + "amp");
@@ -118,6 +127,7 @@ int checkForSignalVars(systemStruct* systemData) {
 		}
 	}
 	if (signalVarFound) {
+		systemData->parameters.push_back("signal");
 		systemData->varNames.push_back("t");
 		systemData->varEqs.push_back("Time");
 	}

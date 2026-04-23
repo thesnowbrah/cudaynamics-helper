@@ -1,8 +1,8 @@
 #include "WriteToFiles.h"
 
 void WriteTXT(systemStruct systemData) {
-	std::ofstream OutputTXT("systems/" + systemData.systemNameCode + ".txt");
-	OutputTXT << "Name: " << systemData.systemNameTXT << "\n" << "Steps: 10000\n"<< "Transient: 10000\n";
+	std::ofstream OutputTXT("systems/" + systemData.systemNameCode + "/" + systemData.systemNameCode + ".txt");
+	OutputTXT << "Name: " << systemData.systemNameTXT << " system\n" << "Steps: 10000\n"<< "Transient: 10000\n";
 	OutputTXT << "// Defining step: \n"
 		<< "// parameter/variable/discrete\n"
 		<< "// Then, unless it is discrete, provide its name and define it like an attribute\n"
@@ -19,18 +19,30 @@ void WriteTXT(systemStruct systemData) {
 		<< "//\n"
 		<< "// Defining variables/parameters:\n"
 		<< "// var/param <name> <ranging type> <minimum value> <maximum value> <step> <step count> <normal mean> <normal deviation>\n";
+
+	bool hasSignal = false;
+	for (int i = 0; i < systemData.varNames.size(); i++) {
+		if (systemData.varEqs[i] == "signal") {
+			hasSignal = true;
+		}
+	}
+
 	for (int i = 0; i < systemData.varNames.size(); i++) {
 		OutputTXT << "var " << systemData.varNames[i] << " Fixed 0.0 10.0 1.0 50 0.0 0.0\n";
 	}
 	for (int i = 0; i < systemData.parameters.size(); i++) {
-		OutputTXT << "param " << systemData.parameters[i] << " Fixed 0.0 10.0 1.0 50 0.0 0.0\n";
+		if(!hasSignal || systemData.parameters[i]!="signal")
+			OutputTXT << "param " << systemData.parameters[i] << " Fixed 0.0 10.0 1.0 50 0.0 0.0\n";
 	}
-	//when VSCD is ready add symmetry param
+	OutputTXT << "param symmetry Fixed 0.0 1.0 0.01 100 0.0 0.0\n";
 
 	OutputTXT << "// Defining enumerated parameters (useful for methods):\n"
-		<< "// enum <name> <ranging type> <minimum value> <maximum value> <step> <step count> <normal mean> <normal deviation> <enum names, no spaces>\n"
-		<< "enum method 1ExplicitEuler 0ExplicitMidpoint 0ExplicitRungeKutta4\n" // ADD VSCD LATER
-		<< "//\n"
+		<< "// enum <name> <ranging type> <minimum value> <maximum value> <step> <step count> <normal mean> <normal deviation> <enum names, no spaces>\n";
+		
+	
+	if (hasSignal)OutputTXT << "enum signal 1square 0sine 0triangle\n";
+
+	OutputTXT<< "enum method 1ExplicitEuler 0SemiExplicitEuler 0ExplicitMidpoint 0ExplicitRungeKutta4 0VariableSymmetryCD\n"
 		<< "// Defining settings for analysis functions:\n"
 		<< "// analysis <name from \"anfunc_names.cpp\"> settings <values, must exactly match the settings struct> \n"
 		<< "analysis Minimum / maximum settings 2 2\n"
@@ -41,7 +53,7 @@ void WriteTXT(systemStruct systemData) {
 }
 
 void WriteHFile(systemStruct systemData) {
-	std::ofstream OutputTXT("systems/" + systemData.systemNameCode + ".h");
+	std::ofstream OutputTXT("systems/" + systemData.systemNameCode + "/" + systemData.systemNameCode + ".h");
 	OutputTXT << "#pragma once\n#include <kernels_common.h>\n\n"
 		<< "#define name " << systemData.systemNameCode << "\n\n"
 		<< "const int THREADS_PER_BLOCK_(name) = 64;\n\n"
@@ -54,7 +66,7 @@ void WriteHFile(systemStruct systemData) {
 }
 
 void WriteCuFile(systemStruct systemData) {
-	std::ofstream OutputTXT("systems/" + systemData.systemNameCode + ".cu");
+	std::ofstream OutputTXT("systems/" + systemData.systemNameCode + "/" + systemData.systemNameCode + ".cu");
 	OutputTXT << "#include \"" + systemData.systemNameCode + ".h \"\n";
 	OutputTXT << "#define name " << systemData.systemNameCode << "\n\n";
 
@@ -71,10 +83,20 @@ void WriteCuFile(systemStruct systemData) {
 	for (int i = 0; i < systemData.parameters.size(); i++) {
 		OutputTXT <<  systemData.parameters[i] << ", ";
 	}
-	OutputTXT << "method, COUNT };\n";
+	OutputTXT << "symmetry, method, COUNT };\n";
+
+	bool hasSignal = false;
+
+	for (int i = 0; i < systemData.varNames.size(); i++) {
+		if (systemData.varEqs[i] == "signal") {
+			hasSignal = true;
+		}
+	}
+
+	if (hasSignal)OutputTXT << "enum waveforms { square, sine, triangle };\n";
 
 	OutputTXT << "enum methods { ";
-	OutputTXT << "ExplicitEuler, ExplicitMidpoint, ExplicitRungeKutta4 };\n}\n\n";// VariableSymmetryCD  not added yet, add later
+	OutputTXT << "ExplicitEuler,  SemiExplicitEuler, ExplicitMidpoint, ExplicitRungeKutta4, VariableSymmetryCD};\n}\n\n";
 
 	OutputTXT << "__global__ void gpu_wrapper_(name)(Computation* data, uint64_t variation)\n"
 		<< "{\n    kernelProgram_(name)(data, (blockIdx.x* blockDim.x) + threadIdx.x);\n}\n";
@@ -92,34 +114,303 @@ void WriteCuFile(systemStruct systemData) {
 		
 	OutputTXT << "__host__ __device__ __forceinline__ void finiteDifferenceScheme_(name)(numb* currentV, numb* nextV, numb* parameters, PerThread* pt)\n{\n\n";
 
-	//			EXPLICIT EULER
-	OutputTXT << "    ifMETHOD(P(method), ExplicitEuler)\n   {\n";
 
-	for (int i = 0; i < systemData.varNames.size(); i++) {
-		OutputTXT << "        Vnext(" << systemData.varNames[i] << ") = V(" << systemData.varNames[i] << ")" << " + H * (" << ChangeEqsToKernelExplicitEuler(systemData, systemData.varEqs[i]) << ");\n";
+	int temp;
+	if (hasSignal)temp = 3;
+	else temp = 1;
+
+	for (int signal = 0; signal < temp; signal++) {
+		
+		if (hasSignal && signal == 0) OutputTXT << "    ifSIGNAL(P(signal), square)\n    {\n";
+		else if(signal == 1)OutputTXT << "    ifSIGNAL(P(signal), sine)\n    {\n";
+		else if (signal == 2)OutputTXT << "    ifSIGNAL(P(signal), triangle)\n    {\n";
+
+		//			EXPLICIT EULER
+		OutputTXT << "    ifMETHOD(P(method), ExplicitEuler)\n    {\n";
+				
+		if(hasSignal)
+			for (int i = 0; i < systemData.varNames.size(); i++) {
+				if (systemData.varEqs[i] == "signal") {
+					if (signal == 0) OutputTXT << "        Vnext(" << systemData.varNames[i] << ") = P(" << systemData.varNames[i] << "dc) + (fmod((V(t) - P(" << systemData.varNames[i] << "del)) > 0 ? "
+						<< "(V(t) - P(" << systemData.varNames[i] << "del)) : (P(" << systemData.varNames[i] << "df) / P(" << systemData.varNames[i] << "freq) + P(" << systemData.varNames[i] << "del) - V(t))"
+						<< ", 1 / P(" << systemData.varNames[i] << "freq)) < P(" << systemData.varNames[i] << "df) / P(" << systemData.varNames[i] << "freq) ? P(" << systemData.varNames[i] << "amp) : (numb)0.0);\n";
+					if (signal == 1) OutputTXT << "        Vnext(" << systemData.varNames[i] << ") = P(" << systemData.varNames[i] << "dc) + P(" << systemData.varNames[i] << "amp) * sin((numb)2.0 * (numb)3.141592653589793"
+						<< " * P(" << systemData.varNames[i] << "freq) * (V(t) - P(" << systemData.varNames[i] << "del)));\n";
+					if (signal == 2) OutputTXT << "        Vnext(" << systemData.varNames[i] << ") = P(" << systemData.varNames[i] << "dc) + P(" << systemData.varNames[i] << "amp) * (((numb)4.0 * P(" << systemData.varNames[i] << "freq)"
+						<< " * (V(t) - P(" << systemData.varNames[i] << "del)) - (numb)2.0 * floor(((numb)4.0 * P(" << systemData.varNames[i] << "del) * (V(t) - P(" << systemData.varNames[i] << "del)) + (numb)1.0) / (numb)2.0))"
+						<< " * ((int)floor(((numb)4.0 *P( " << systemData.varNames[i] << "freq) * (V(t) - P(" << systemData.varNames[i] << "del)) + (numb)1.0) / (numb)2.0) % 2 == 0 ? (numb)1.0 : (numb)-1.0));\n";
+				}
+			}
+
+		for (int i = 0; i < systemData.varNames.size(); i++) {
+			if (systemData.varEqs[i] == "Time") {
+				OutputTXT << "        Vnext(" << systemData.varNames[i] << ") = V(" << systemData.varNames[i] << ")" << " + H;\n";
+			}
+
+			else if (systemData.varEqs[i] != "signal") {
+				OutputTXT << "        Vnext(" << systemData.varNames[i] << ") = V(" << systemData.varNames[i] << ")" << " + H * (" << ChangeEqsToKernelExplicitEuler(systemData, systemData.varEqs[i]) << ");\n";
+			}
+		}
+
+		OutputTXT << "    }\n\n";
+		//			EXPLICIT EULER
+
+		//			EXPLICIT EULER-CROMER
+		OutputTXT << "    ifMETHOD(P(method), SemiExplicitEuler)\n    {\n";
+
+		if (hasSignal)
+			for (int i = 0; i < systemData.varNames.size(); i++) {
+				if (systemData.varEqs[i] == "signal") {
+					if (signal == 0) OutputTXT << "        Vnext(" << systemData.varNames[i] << ") = P(" << systemData.varNames[i] << "dc) + (fmod((V(t) - P(" << systemData.varNames[i] << "del)) > 0 ? "
+						<< "(V(t) - P(" << systemData.varNames[i] << "del)) : (P(" << systemData.varNames[i] << "df) / P(" << systemData.varNames[i] << "freq) + P(" << systemData.varNames[i] << "del) - V(t))"
+						<< ", 1 / P(" << systemData.varNames[i] << "freq)) < P(" << systemData.varNames[i] << "df) / P(" << systemData.varNames[i] << "freq) ? P(" << systemData.varNames[i] << "amp) : (numb)0.0);\n";
+					if (signal == 1) OutputTXT << "        Vnext(" << systemData.varNames[i] << ") = P(" << systemData.varNames[i] << "dc) + P(" << systemData.varNames[i] << "amp) * sin((numb)2.0 * (numb)3.141592653589793"
+						<< " * P(" << systemData.varNames[i] << "freq) * (V(t) - P(" << systemData.varNames[i] << "del)));\n";
+					if (signal == 2) OutputTXT << "        Vnext(" << systemData.varNames[i] << ") = P(" << systemData.varNames[i] << "dc) + P(" << systemData.varNames[i] << "amp) * (((numb)4.0 * P(" << systemData.varNames[i] << "freq)"
+						<< " * (V(t) - P(" << systemData.varNames[i] << "del)) - (numb)2.0 * floor(((numb)4.0 * P(" << systemData.varNames[i] << "del) * (V(t) - P(" << systemData.varNames[i] << "del)) + (numb)1.0) / (numb)2.0))"
+						<< " * ((int)floor(((numb)4.0 * P(" << systemData.varNames[i] << "freq) * (V(t) - P(" << systemData.varNames[i] << "del)) + (numb)1.0) / (numb)2.0) % 2 == 0 ? (numb)1.0 : (numb)-1.0));\n";
+				}
+			}
+
+		for (int i = 0; i < systemData.varNames.size(); i++) {
+			if (systemData.varEqs[i] == "Time") {
+				OutputTXT << "        Vnext(" << systemData.varNames[i] << ") = V(" << systemData.varNames[i] << ")" << " + H;\n";
+			}
+
+			else if (systemData.varEqs[i] != "signal"){
+				OutputTXT << "        Vnext(" << systemData.varNames[i] << ") = V(" << systemData.varNames[i] << ")" << " + H * (" << ChangeEqsToKernelSemiExplicit(systemData, systemData.varEqs[i], i) << ");\n";
+			}
+		}
+
+		OutputTXT << "    }\n\n";
+		//			EXPLICIT EULER-CROMER
+
+		//			EXPLICIT MIDPOINT
+		OutputTXT << "    ifMETHOD(P(method), ExplicitMidpoint)\n    {\n";
+
+		if (hasSignal)
+			for (int i = 0; i < systemData.varNames.size(); i++) {
+				if (systemData.varEqs[i] == "signal") {
+					if (signal == 0) OutputTXT << "        Vnext(" << systemData.varNames[i] << ") = P(" << systemData.varNames[i] << "dc) + (fmod((V(t) - P(" << systemData.varNames[i] << "del)) > 0 ? "
+						<< "(V(t) - P(" << systemData.varNames[i] << "del)) : (P(" << systemData.varNames[i] << "df) / P(" << systemData.varNames[i] << "freq) + P(" << systemData.varNames[i] << "del) - V(t))"
+						<< ", 1 / P(" << systemData.varNames[i] << "freq)) < P(" << systemData.varNames[i] << "df) / P(" << systemData.varNames[i] << "freq) ? P(" << systemData.varNames[i] << "amp) : (numb)0.0);\n";
+					if (signal == 1) OutputTXT << "        Vnext(" << systemData.varNames[i] << ") = P(" << systemData.varNames[i] << "dc) + P(" << systemData.varNames[i] << "amp) * sin((numb)2.0 * (numb)3.141592653589793"
+						<< " * P(" << systemData.varNames[i] << "freq) * (V(t) - P(" << systemData.varNames[i] << "del)));\n";
+					if (signal == 2) OutputTXT << "        Vnext(" << systemData.varNames[i] << ") = P(" << systemData.varNames[i] << "dc) + P(" << systemData.varNames[i] << "amp) * (((numb)4.0 * P(" << systemData.varNames[i] << "freq)"
+						<< " * (V(t) - P(" << systemData.varNames[i] << "del)) - (numb)2.0 * floor(((numb)4.0 * P(" << systemData.varNames[i] << "del) * (V(t) - P(" << systemData.varNames[i] << "del)) + (numb)1.0) / (numb)2.0))"
+						<< " * ((int)floor(((numb)4.0 * P(" << systemData.varNames[i] << "freq) * (V(t) - P(" << systemData.varNames[i] << "del)) + (numb)1.0) / (numb)2.0) % 2 == 0 ? (numb)1.0 : (numb)-1.0));\n";
+				}
+			}
+		for (int i = 0; i < systemData.varNames.size(); i++) {
+			if (systemData.varEqs[i] == "Time") {
+				OutputTXT << "        numb " << systemData.varNames[i] << "mp = V(" << systemData.varNames[i] << ")" << " + H * (numb)0.5;\n";
+			}
+
+			else if (systemData.varEqs[i] != "signal"){
+				OutputTXT << "        numb " << systemData.varNames[i] << "mp = V(" << systemData.varNames[i] << ")" << " + (numb)0.5 * H * (" << ChangeEqsToKernelExplicitEuler(systemData, systemData.varEqs[i]) << ");\n";
+			}
+		}
+
+
+		if (hasSignal)
+			for (int i = 0; i < systemData.varNames.size(); i++) {
+				if (systemData.varEqs[i] == "signal") {
+					if (signal == 0) OutputTXT << "        Vnext(" << systemData.varNames[i] << ") = P(" << systemData.varNames[i] << "dc) + (fmod((tmp - P(" << systemData.varNames[i] << "del)) > 0 ? "
+						<< "(tmp - P(" << systemData.varNames[i] << "del)) : (P(" << systemData.varNames[i] << "df) / P(" << systemData.varNames[i] << "freq) + P(" << systemData.varNames[i] << "del) - tmp)"
+						<< ", 1 / P(" << systemData.varNames[i] << "freq)) < P(" << systemData.varNames[i] << "df) / P(" << systemData.varNames[i] << "freq) ? P(" << systemData.varNames[i] << "amp) : (numb)0.0);\n";
+					if (signal == 1) OutputTXT << "        Vnext(" << systemData.varNames[i] << ") = P(" << systemData.varNames[i] << "dc) + P(" << systemData.varNames[i] << "amp) * sin((numb)2.0 * (numb)3.141592653589793"
+						<< " * P(" << systemData.varNames[i] << "freq) * (tmp - P(" << systemData.varNames[i] << "del)));\n";
+					if (signal == 2) OutputTXT << "        Vnext(" << systemData.varNames[i] << ") = P(" << systemData.varNames[i] << "dc) + P(" << systemData.varNames[i] << "amp) * (((numb)4.0 * P(" << systemData.varNames[i] << "freq)"
+						<< " * (tmp - P(" << systemData.varNames[i] << "del)) - (numb)2.0 * floor(((numb)4.0 * P(" << systemData.varNames[i] << "del) * (tmp - P(" << systemData.varNames[i] << "del)) + (numb)1.0) / (numb)2.0))"
+						<< " * ((int)floor(((numb)4.0 * P(" << systemData.varNames[i] << "freq) * (tmp - P(" << systemData.varNames[i] << "del)) + (numb)1.0) / (numb)2.0) % 2 == 0 ? (numb)1.0 : (numb)-1.0));\n";
+				}
+			}
+		for (int i = 0; i < systemData.varNames.size(); i++) {
+			if (systemData.varEqs[i] == "Time") {
+				OutputTXT << "        Vnext(" << systemData.varNames[i] << ") = V(" << systemData.varNames[i] << ")" << " + H;\n";
+			}
+
+			else if(systemData.varEqs[i] != "signal") {
+				OutputTXT << "        Vnext(" << systemData.varNames[i] << ") = V(" << systemData.varNames[i] << ")" << " + H * (" << ChangeEqsToKernelExplicitMidpoint(systemData, systemData.varEqs[i]) << ");\n";
+			}
+		}
+
+		OutputTXT << "    }\n\n";
+		//			EXPLICIT MIDPOINT
+
+
+
+		//			EXPLICIT RK4
+		OutputTXT << "    ifMETHOD(P(method), ExplicitRungeKutta4)\n    {\n";
+
+		if (hasSignal)
+			for (int i = 0; i < systemData.varNames.size(); i++) {
+				if (systemData.varEqs[i] == "signal") {
+					if (signal == 0) OutputTXT << "        Vnext(" << systemData.varNames[i] << ") = P(" << systemData.varNames[i] << "dc) + (fmod((V(t) - P(" << systemData.varNames[i] << "del)) > 0 ? "
+						<< "(V(t) - P(" << systemData.varNames[i] << "del)) : (P(" << systemData.varNames[i] << "df) / P(" << systemData.varNames[i] << "freq) + P(" << systemData.varNames[i] << "del) - V(t))"
+						<< ", 1 / P(" << systemData.varNames[i] << "freq)) < P(" << systemData.varNames[i] << "df) / P(" << systemData.varNames[i] << "freq) ? P(" << systemData.varNames[i] << "amp) : (numb)0.0);\n";
+					if (signal == 1) OutputTXT << "        Vnext(" << systemData.varNames[i] << ") = P(" << systemData.varNames[i] << "dc) + P(" << systemData.varNames[i] << "amp) * sin((numb)2.0 * (numb)3.141592653589793"
+						<< " * P(" << systemData.varNames[i] << "freq) * (V(t) - P(" << systemData.varNames[i] << "del)));\n";
+					if (signal == 2) OutputTXT << "        Vnext(" << systemData.varNames[i] << ") = P(" << systemData.varNames[i] << "dc) + P(" << systemData.varNames[i] << "amp) * (((numb)4.0 * P(" << systemData.varNames[i] << "freq)"
+						<< " * (V(t) - P(" << systemData.varNames[i] << "del)) - (numb)2.0 * floor(((numb)4.0 * P(" << systemData.varNames[i] << "del) * (V(t) - P(" << systemData.varNames[i] << "del)) + (numb)1.0) / (numb)2.0))"
+						<< " * ((int)floor(((numb)4.0 * P(" << systemData.varNames[i] << "freq) * (V(t) - P(" << systemData.varNames[i] << "del)) + (numb)1.0) / (numb)2.0) % 2 == 0 ? (numb)1.0 : (numb)-1.0));\n";
+				}
+			}
+
+		for (int i = 0; i < systemData.varNames.size(); i++) {
+			if (systemData.varEqs[i] == "Time") {
+				OutputTXT << "        numb k" << systemData.varNames[i] << "1 = 1;\n";
+			}
+
+			else if (systemData.varEqs[i] != "signal"){
+				OutputTXT << "        numb k" << systemData.varNames[i] << "1 = " << ChangeEqsToKernelExplicitEuler(systemData, systemData.varEqs[i]) << ";\n";
+			}
+		}
+		OutputTXT << "\n";
+		for (int i = 0; i < systemData.varNames.size(); i++) {
+			if(systemData.varEqs[i] != "signal")
+			OutputTXT << "        numb " << systemData.varNames[i] << "mp = V(" << systemData.varNames[i] << ")" << " + (numb)0.5 * H * k" << systemData.varNames[i] << "1;\n";
+		}
+		OutputTXT << "\n";
+
+
+		if (hasSignal)
+			for (int i = 0; i < systemData.varNames.size(); i++) {
+				if (systemData.varEqs[i] == "signal") {
+					if (signal == 0) OutputTXT << "        Vnext(" << systemData.varNames[i] << ") = P(" << systemData.varNames[i] << "dc) + (fmod((tmp - P(" << systemData.varNames[i] << "del)) > 0 ? "
+						<< "(tmp - P(" << systemData.varNames[i] << "del)) : (P(" << systemData.varNames[i] << "df) / P(" << systemData.varNames[i] << "freq) + P(" << systemData.varNames[i] << "del) - tmp)"
+						<< ", 1 / P(" << systemData.varNames[i] << "freq)) < P(" << systemData.varNames[i] << "df) / P(" << systemData.varNames[i] << "freq) ? P(" << systemData.varNames[i] << "amp) : (numb)0.0);\n";
+					if (signal == 1) OutputTXT << "        Vnext(" << systemData.varNames[i] << ") = P(" << systemData.varNames[i] << "dc) + P(" << systemData.varNames[i] << "amp) * sin((numb)2.0 * (numb)3.141592653589793"
+						<< " * P(" << systemData.varNames[i] << "freq) * (tmp - P(" << systemData.varNames[i] << "del)));\n";
+					if (signal == 2) OutputTXT << "        Vnext(" << systemData.varNames[i] << ") = P(" << systemData.varNames[i] << "dc) + P(" << systemData.varNames[i] << "amp) * (((numb)4.0 * P(" << systemData.varNames[i] << "freq)"
+						<< " * (tmp - P(" << systemData.varNames[i] << "del)) - (numb)2.0 * floor(((numb)4.0 * P(" << systemData.varNames[i] << "del) * (tmp - P(" << systemData.varNames[i] << "del)) + (numb)1.0) / (numb)2.0))"
+						<< " * ((int)floor(((numb)4.0 * P(" << systemData.varNames[i] << "freq) * (tmp - P(" << systemData.varNames[i] << "del)) + (numb)1.0) / (numb)2.0) % 2 == 0 ? (numb)1.0 : (numb)-1.0));\n";
+				}
+			}
+		for (int i = 0; i < systemData.varNames.size(); i++) {
+			if (systemData.varEqs[i] == "Time") {
+				OutputTXT << "        numb k" << systemData.varNames[i] << "2 = 1;\n";
+			}
+
+			else if(systemData.varEqs[i] != "signal"){
+				OutputTXT << "        numb k" << systemData.varNames[i] << "2 = " << ChangeEqsToKernelExplicitMidpoint(systemData, systemData.varEqs[i]) << ";\n";
+			}
+		}
+		OutputTXT << "\n";
+		for (int i = 0; i < systemData.varNames.size(); i++) {
+			if (systemData.varEqs[i] != "signal")
+			OutputTXT << "        " << systemData.varNames[i] << "mp = V(" << systemData.varNames[i] << ")" << " + (numb)0.5 * H * k" << systemData.varNames[i] << "2;\n";
+		}
+		OutputTXT << "\n";
+
+		for (int i = 0; i < systemData.varNames.size(); i++) {
+			if(systemData.varEqs[i] != "Time" && systemData.varEqs[i] != "signal") OutputTXT << "        numb k" << systemData.varNames[i] << "3 = " << ChangeEqsToKernelExplicitMidpoint(systemData, systemData.varEqs[i]) << ";\n";
+			else if(systemData.varEqs[i] == "Time") OutputTXT << "        numb k" << systemData.varNames[i] << "3 = 1" << ";\n";
+
+		}
+		OutputTXT << "\n";
+		for (int i = 0; i < systemData.varNames.size(); i++) {
+			if (systemData.varEqs[i] != "signal")
+			OutputTXT << "        " << systemData.varNames[i] << "mp = V(" << systemData.varNames[i] << ")" << " + H * k" << systemData.varNames[i] << "3;\n";
+		}
+		OutputTXT << "\n";
+
+
+		if (hasSignal)
+			for (int i = 0; i < systemData.varNames.size(); i++) {
+				if (systemData.varEqs[i] == "signal") {
+					if (signal == 0) OutputTXT << "        Vnext(" << systemData.varNames[i] << ") = P(" << systemData.varNames[i] << "dc) + (fmod((tmp - P(" << systemData.varNames[i] << "del)) > 0 ? "
+						<< "(tmp - P(" << systemData.varNames[i] << "del)) : (P(" << systemData.varNames[i] << "df) / P(" << systemData.varNames[i] << "freq) + P(" << systemData.varNames[i] << "del) - tmp)"
+						<< ", 1 / P(" << systemData.varNames[i] << "freq)) < P(" << systemData.varNames[i] << "df) / P(" << systemData.varNames[i] << "freq) ? P(" << systemData.varNames[i] << "amp) : (numb)0.0);\n";
+					if (signal == 1) OutputTXT << "        Vnext(" << systemData.varNames[i] << ") = P(" << systemData.varNames[i] << "dc) + P(" << systemData.varNames[i] << "amp) * sin((numb)2.0 * (numb)3.141592653589793"
+						<< " * P(" << systemData.varNames[i] << "freq) * (tmp - P(" << systemData.varNames[i] << "del)));\n";
+					if (signal == 2) OutputTXT << "        Vnext(" << systemData.varNames[i] << ") = P(" << systemData.varNames[i] << "dc) + P(" << systemData.varNames[i] << "amp) * (((numb)4.0 * P(" << systemData.varNames[i] << "freq)"
+						<< " * (tmp - P(" << systemData.varNames[i] << "del)) - (numb)2.0 * floor(((numb)4.0 * P(" << systemData.varNames[i] << "del) * (tmp - P(" << systemData.varNames[i] << "del)) + (numb)1.0) / (numb)2.0))"
+						<< " * ((int)floor(((numb)4.0 * P(" << systemData.varNames[i] << "freq) * (tmp - P(" << systemData.varNames[i] << "del)) + (numb)1.0) / (numb)2.0) % 2 == 0 ? (numb)1.0 : (numb)-1.0));\n";
+				}
+			}
+		for (int i = 0; i < systemData.varNames.size(); i++) {
+			if (systemData.varEqs[i] == "Time") {
+				OutputTXT << "        numb k" << systemData.varNames[i] << "4 = 1;\n";
+			}
+			else if (systemData.varEqs[i] != "signal"){
+				OutputTXT << "        numb k" << systemData.varNames[i] << "4 = " << ChangeEqsToKernelExplicitMidpoint(systemData, systemData.varEqs[i]) << ";\n";
+			}
+		}
+		OutputTXT << "\n";
+
+		for (int i = 0; i < systemData.varNames.size(); i++) {
+			if(systemData.varEqs[i] != "signal")
+			OutputTXT << "        Vnext(" << systemData.varNames[i] << ") = V(" << systemData.varNames[i] << ") + H * (k" << systemData.varNames[i] << "1"
+				<< " + (numb)2.0 * k" << systemData.varNames[i] << "2" << " + (numb)2.0 * k" << systemData.varNames[i] << "3"
+				<< " + k" << systemData.varNames[i] << "4) / (numb)6.0" << ";\n";
+		}
+
+		OutputTXT << "    }\n\n";
+		//			EXPLICIT RK4
+
+		//			EXPLICIT VSCD
+		OutputTXT << "    ifMETHOD(P(method), VariableSymmetryCD)\n    {\n";
+		OutputTXT << "        numb h1 = (numb)0.5 * H - P(symmetry);\n        numb h2 = (numb)0.5 * H + P(symmetry);\n";
+
+		//			SEMI EXPLICIT EULER
+		if (hasSignal)
+			for (int i = 0; i < systemData.varNames.size(); i++) {
+				if (systemData.varEqs[i] == "signal") {
+					if (signal == 0) OutputTXT << "        Vnext(" << systemData.varNames[i] << ") = P(" << systemData.varNames[i] << "dc) + (fmod((V(t) - P(" << systemData.varNames[i] << "del)) > 0 ? "
+						<< "(V(t) - P(" << systemData.varNames[i] << "del)) : (P(" << systemData.varNames[i] << "df) / P(" << systemData.varNames[i] << "freq) + P(" << systemData.varNames[i] << "del) - V(t))"
+						<< ", 1 / P(" << systemData.varNames[i] << "freq)) < P(" << systemData.varNames[i] << "df) / P(" << systemData.varNames[i] << "freq) ? P(" << systemData.varNames[i] << "amp) : (numb)0.0);\n";
+					if (signal == 1) OutputTXT << "        Vnext(" << systemData.varNames[i] << ") = P(" << systemData.varNames[i] << "dc) + P(" << systemData.varNames[i] << "amp) * sin((numb)2.0 * (numb)3.141592653589793"
+						<< " * P(" << systemData.varNames[i] << "freq) * (V(t) - P(" << systemData.varNames[i] << "del)));\n";
+					if (signal == 2) OutputTXT << "        Vnext(" << systemData.varNames[i] << ") = P(" << systemData.varNames[i] << "dc) + P(" << systemData.varNames[i] << "amp) * (((numb)4.0 * P(" << systemData.varNames[i] << "freq)"
+						<< " * (V(t) - P(" << systemData.varNames[i] << "del)) - (numb)2.0 * floor(((numb)4.0 * P(" << systemData.varNames[i] << "del) * (V(t) - P(" << systemData.varNames[i] << "del)) + (numb)1.0) / (numb)2.0))"
+						<< " * ((int)floor(((numb)4.0 * P(" << systemData.varNames[i] << "freq) * (V(t) - P(" << systemData.varNames[i] << "del)) + (numb)1.0) / (numb)2.0) % 2 == 0 ? (numb)1.0 : (numb)-1.0));\n";
+				}
+			}
+
+		for (int i = 0; i < systemData.varNames.size(); i++) {
+			if (systemData.varEqs[i] == "Time") {
+				OutputTXT << "        Vnext(" << systemData.varNames[i] << ") = V(" << systemData.varNames[i] << ")" << " + H;\n";
+			}
+
+			else if (systemData.varEqs[i] != "signal") {
+				OutputTXT << "        Vnext(" << systemData.varNames[i] << ") = V(" << systemData.varNames[i] << ")" << " + h1 * (" << ChangeEqsToKernelSemiExplicit(systemData, systemData.varEqs[i], i) << ");\n";
+			}
+		}
+
+		//			SEMI EXPLICIT EULER
+
+		//			IMPLICITNESS
+		if (hasSignal)
+			for (int i = 0; i < systemData.varNames.size(); i++) {
+				if (systemData.varEqs[i] == "signal") {
+					if (signal == 0) OutputTXT << "        Vnext(" << systemData.varNames[i] << ") = P(" << systemData.varNames[i] << "dc) + (fmod((Vnext(t) - P(" << systemData.varNames[i] << "del)) > 0 ? "
+						<< "(Vnext(t) - P(" << systemData.varNames[i] << "del)) : (P(" << systemData.varNames[i] << "df) / P(" << systemData.varNames[i] << "freq) + P(" << systemData.varNames[i] << "del) - Vnext(t))"
+						<< ", 1 / P(" << systemData.varNames[i] << "freq)) < P(" << systemData.varNames[i] << "df) / P(" << systemData.varNames[i] << "freq) ? P(" << systemData.varNames[i] << "amp) : (numb)0.0);\n";
+					if (signal == 1) OutputTXT << "        Vnext(" << systemData.varNames[i] << ") = P(" << systemData.varNames[i] << "dc) + P(" << systemData.varNames[i] << "amp) * sin((numb)2.0 * (numb)3.141592653589793"
+						<< " * P(" << systemData.varNames[i] << "freq) * (Vnext(t) - P(" << systemData.varNames[i] << "del)));\n";
+					if (signal == 2) OutputTXT << "        Vnext(" << systemData.varNames[i] << ") = P(" << systemData.varNames[i] << "dc) + P(" << systemData.varNames[i] << "amp) * (((numb)4.0 * P(" << systemData.varNames[i] << "freq)"
+						<< " * (Vnext(t) - P(" << systemData.varNames[i] << "del)) - (numb)2.0 * floor(((numb)4.0 * P(" << systemData.varNames[i] << "del) * (Vnext(t) - P(" << systemData.varNames[i] << "del)) + (numb)1.0) / (numb)2.0))"
+						<< " * ((int)floor(((numb)4.0 * P(" << systemData.varNames[i] << "freq) * (Vnext(t) - P(" << systemData.varNames[i] << "del)) + (numb)1.0) / (numb)2.0) % 2 == 0 ? (numb)1.0 : (numb)-1.0));\n";
+				}
+			}
+		for (int i = systemData.varNames.size() - 1; i >= 0; i--) {
+			if(systemData.varEqs[i] != "Time" && systemData.varEqs[i] != "signal")
+			{
+			//		MAKE A FUNCTION THAT WOULD FIND AND SOLVE IMPLICITNESS
+			}
+		}
+
+		//			IMPLICITNESS
+
+		OutputTXT << "    }\n\n";
+		//			EXPLICIT VSCD
+
+		if(hasSignal)OutputTXT<< "    }\n\n";
+
+		
 	}
-
-	OutputTXT << "    }\n\n";
-	//			EXPLICIT EULER
-
-	//			EXPLICIT MIDPOINT
-	OutputTXT << "    ifMETHOD(P(method), ExplicitMidpoint)\n   {\n";
-
-	for (int i = 0; i < systemData.varNames.size(); i++) {
-		OutputTXT << "        numb " << systemData.varNames[i] << "mp = V(" << systemData.varNames[i] << ")" << " + (numb)0.5 * H * (" << ChangeEqsToKernelExplicitEuler(systemData, systemData.varEqs[i]) << ");\n";
-	}
-
-	for (int i = 0; i < systemData.varNames.size(); i++) {
-		OutputTXT << "        numb " << systemData.varNames[i] << "mp = V(" << systemData.varNames[i] << ")" << " + H * (" << ChangeEqsToKernelExplicitMidpoint(systemData, systemData.varEqs[i]) << ");\n";
-	}
-
-	OutputTXT << "    }\n\n";
-	//			EXPLICIT MIDPOINT
-
-
 	OutputTXT << "}\n";
-
-
 	OutputTXT.close();
 }
 
@@ -135,6 +426,9 @@ std::string ChangeEqsToKernelExplicitEuler(systemStruct systemData, std::string 
 					if (tempStr != "") {
 						for (int var = 0; var < systemData.varNames.size(); var++) {
 							if (tempStr == systemData.varNames[var]) {
+								if (systemData.varEqs[var] == "signal") {
+									result += "Vnext("; result += tempStr; result += ")"; varOrParFound = true; break;
+								}
 								result += "V("; result += tempStr; result += ")"; varOrParFound = true; break;
 							}
 						}
@@ -159,6 +453,9 @@ std::string ChangeEqsToKernelExplicitEuler(systemStruct systemData, std::string 
 				if (i == original.size() - 1) {
 					for (int var = 0; var < systemData.varNames.size(); var++) {
 						if (tempStr == systemData.varNames[var]) {
+							if (systemData.varEqs[var] == "signal") {
+								result += "Vnext("; result += tempStr; result += ")"; varOrParFound = true; break;
+							}
 							result += "V("; result += tempStr; result += ")"; varOrParFound = true; break;
 						}
 					}
@@ -191,7 +488,10 @@ std::string ChangeEqsToKernelExplicitMidpoint(systemStruct systemData, std::stri
 				if (tempStr != "") {
 					for (int var = 0; var < systemData.varNames.size(); var++) {
 						if (tempStr == systemData.varNames[var]) {
-							 result += tempStr; result += "mp"; varOrParFound = true; break;
+							if (systemData.varEqs[var] == "signal") {
+								result += "Vnext("; result += tempStr; result += ")"; varOrParFound = true; break;
+							}
+							result += tempStr; result += "mp"; varOrParFound = true; break;
 						}
 					}
 					for (int par = 0; par < systemData.parameters.size(); par++) {
@@ -215,7 +515,76 @@ std::string ChangeEqsToKernelExplicitMidpoint(systemStruct systemData, std::stri
 			if (i == original.size() - 1) {
 				for (int var = 0; var < systemData.varNames.size(); var++) {
 					if (tempStr == systemData.varNames[var]) {
+						if (systemData.varEqs[var] == "signal") {
+							result += "Vnext("; result += tempStr; result += ")"; varOrParFound = true; break;
+						}
 						result += tempStr; result += "mp"; varOrParFound = true; break;
+					}
+				}
+				for (int par = 0; par < systemData.parameters.size(); par++) {
+					if (tempStr == systemData.parameters[par]) {
+						result += "P("; result += tempStr; result += ")"; varOrParFound = true; break;
+					}
+				}
+				if (!varOrParFound) {
+					result += tempStr;
+				}
+				else varOrParFound = false;
+			}
+
+		}
+	}
+
+	return result;
+}
+
+std::string ChangeEqsToKernelSemiExplicit(systemStruct systemData, std::string original, int eqNum) {
+	std::string result = "";
+	bool nameOrFunc = false;
+	bool varOrParFound = false;
+	std::string tempStr = "";
+	for (int i = 0; i < original.size(); i++) {
+		if (original[i] < 48 || (original[i] >= 48 && original[i] <= 57 && !nameOrFunc) || (original[i] <= 64 && original[i] >= 58) || (original[i] > 122)) {
+
+			if (nameOrFunc) {
+				if (tempStr != "") {
+					for (int var = 0; var < systemData.varNames.size(); var++) {
+						if (tempStr == systemData.varNames[var]) {
+							if (var >= eqNum) {
+								result += "V("; result += tempStr; result += ")"; varOrParFound = true; break;
+							}
+							else {
+								result += "Vnext("; result += tempStr; result += ")"; varOrParFound = true; break;
+							}
+						}
+					}
+					for (int par = 0; par < systemData.parameters.size(); par++) {
+						if (tempStr == systemData.parameters[par]) {
+							result += "P("; result += tempStr; result += ")"; varOrParFound = true; break;
+						}
+					}
+				}
+				if (!varOrParFound) {
+					result += tempStr;
+				}
+				else varOrParFound = false;
+				nameOrFunc = false;
+				tempStr = "";
+			}
+			result += original[i];
+		}
+		else if (original[i] >= 48 && original[i] <= 57 && nameOrFunc || (original[i] >= 65 && original[i] <= 90) || (original[i] >= 97 && original[i] <= 122)) {
+			nameOrFunc = true;
+			tempStr += original[i];
+			if (i == original.size() - 1) {
+				for (int var = 0; var < systemData.varNames.size(); var++) {
+					if (tempStr == systemData.varNames[var]) {
+						if (var >= eqNum) {
+							result += "V("; result += tempStr; result += ")"; varOrParFound = true; break;
+						}
+						else {
+							result += "Vnext("; result += tempStr; result += ")"; varOrParFound = true; break;
+						}
 					}
 				}
 				for (int par = 0; par < systemData.parameters.size(); par++) {

@@ -14,6 +14,7 @@
 #include <list>
 #include <string>
 #include <fstream>
+#include <filesystem>
 
 #include "CopyDataFromFile.h"
 #include "WriteToFiles.h"
@@ -221,7 +222,7 @@ int main(int, char**)
 
                 ImGui::SameLine();
 
-                if (varEqs[i] == "Signal") { isSignal = true; ImGui::Text("Signal"); }
+                if (varEqs[i] == "signal") { isSignal = true; ImGui::Text("signal"); }
                 else {
                     isSignal = false;
                     inputID = "##Equation" + std::to_string(i);
@@ -247,8 +248,8 @@ int main(int, char**)
                 ImGui::SameLine();
                 inputID = "Is Signal##" + std::to_string(i);
                 ImGui::Checkbox(inputID.c_str(), &isSignal);
-                if (isSignal) { varEqs[i] = "Signal"; }
-                else if (varEqs[i] == "Signal") { varEqs[i] = ""; }
+                if (isSignal) { varEqs[i] = "signal"; }
+                else if (varEqs[i] == "signal") { varEqs[i] = ""; }
 
                 ImGui::Text(" ");
 
@@ -293,9 +294,15 @@ int main(int, char**)
                     
                     mainDataProcess(&systemData);
 
+                    std::string tmp = "systems/" + systemData.systemNameCode;
+
+                    std::filesystem::create_directory(tmp);
+
                     WriteTXT(systemData);
                     WriteCuFile(systemData);
                     WriteHFile(systemData);
+
+
 
                     createButton_clicked = false;
                     for (int i = 0; i < varAmount; i++) {
@@ -344,7 +351,7 @@ bool checkNameCorrectness(std::string line) {
     }
 
     for (int i = 0; i < line.size(); i++) {
-        if (line[i] != 160) notBlank = true;
+        if (line[i] != 32) notBlank = true;
         if (line[i] < 32 || (line[i] > 32 && line[i] < 45 )|| (line[i] > 45 && line[i] < 48) || (line[i] > 57 && line[i] < 65) || (line[i] > 90 && line[i] < 97) || line[i] > 122) return 1;
         
     }
@@ -355,7 +362,7 @@ bool checkNameCorrectness(std::string line) {
 bool checkEqsCorrectness(std::string line) {
     if (line.size() == 0) return 1;
     for (int i = 0; i < line.size(); i++) {
-        if (line[i]<32 || (line[i] >32 && line[i] < 37) || line[i] == 39 || line[i] == 46 || (line[i]>57 && line[i] < 60) || line[i] == 64 || (line[i]>90 && line[i] < 97) || line[i] > 122) return 1;
+        if (line[i]<32 || (line[i] >32 && line[i] < 37) || line[i] == 39 || (line[i]>57 && line[i] < 60) || line[i] == 64 || (line[i]>90 && line[i] < 97) || line[i] > 122) return 1;
     }
     return 0;
 }
