@@ -14,7 +14,6 @@
 #include <list>
 #include <string>
 #include <fstream>
-#include <filesystem>
 
 #include "CopyDataFromFile.h"
 #include "WriteToFiles.h"
@@ -37,6 +36,7 @@ void MakeTextFile(std::string systemName, std::vector<std::string> varNames, std
 bool checkNameCorrectness(std::string line);
 bool checkEqsCorrectness(std::string line);
 LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+std::filesystem::path getExecutableDirectory();
 
 // Main code
 int main(int, char**)
@@ -294,15 +294,14 @@ int main(int, char**)
                     
                     mainDataProcess(&systemData);
 
-                    std::string tmp = "systems/" + systemData.systemNameCode;
-
-                    std::filesystem::create_directory(tmp);
-
-                    WriteTXT(systemData);
-                    WriteCuFile(systemData);
-                    WriteHFile(systemData);
+                    
 
 
+                    std::filesystem::path exeDir = getExecutableDirectory();
+                    std::filesystem::path projectRoot = exeDir.parent_path().parent_path().parent_path();
+                    std::filesystem::path cudaynamicsPath = projectRoot / "cudaynamics-helper-test";
+
+                    WriteMain(systemData, cudaynamicsPath);
 
                     createButton_clicked = false;
                     for (int i = 0; i < varAmount; i++) {
@@ -376,7 +375,12 @@ void MakeTextFile(std::string systemName, std::vector<std::string> varNames, std
     outputFile.close();
 }
 
-// Helper functions
+std::filesystem::path getExecutableDirectory() {
+    wchar_t buffer[MAX_PATH];
+    GetModuleFileName(nullptr, buffer, MAX_PATH);
+    return std::filesystem::path(buffer).parent_path();
+}
+
 bool CreateDeviceD3D(HWND hWnd)
 {
     // Setup swap chain

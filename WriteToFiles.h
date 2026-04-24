@@ -1,10 +1,18 @@
 #pragma once
 #include <fstream>
+
+#include <filesystem>
+#include <windows.h> // Äëÿ GetModuleFileName
 #include "SystemStruct.h"
 
-void WriteTXT(systemStruct systemData);
-void WriteHFile(systemStruct systemData);
-void WriteCuFile(systemStruct systemData);
+void WriteMain(systemStruct systemData, std::filesystem::path cudaynamicsPath);
+void WriteTXT(systemStruct systemData, std::filesystem::path cudaynamicsPath);
+void WriteHFile(systemStruct systemData, std::filesystem::path cudaynamicsPath);
+void WriteCuFile(systemStruct systemData, std::filesystem::path cudaynamicsPath);
+void WriteToMainCPP(systemStruct systemData, std::filesystem::path cudaynamicsPath);
+void WriteToSystemHeaders(systemStruct systemData, std::filesystem::path cudaynamicsPath);
+void WriteToCudaynamicsProjFilters(systemStruct systemData, std::filesystem::path cudaynamicsPath);
+void WriteToVCXPROJFile(systemStruct systemData, std::filesystem::path cudaynamicsPath);
 
 std::string ChangeEqsToKernelExplicitEuler(systemStruct systemData, std::string original);
 std::string ChangeEqsToKernelExplicitMidpoint(systemStruct systemData, std::string original);

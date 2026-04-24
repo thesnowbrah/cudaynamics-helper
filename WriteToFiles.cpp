@@ -1,7 +1,100 @@
 #include "WriteToFiles.h"
 
-void WriteTXT(systemStruct systemData) {
-	std::ofstream OutputTXT("systems/" + systemData.systemNameCode + "/" + systemData.systemNameCode + ".txt");
+
+void WriteMain(systemStruct systemData, std::filesystem::path cudaynamicsPath) {
+	std::filesystem::path fullPath = cudaynamicsPath / "systems" / systemData.systemNameCode;
+	std::filesystem::create_directory(fullPath);
+	WriteTXT(systemData, fullPath);
+	WriteCuFile(systemData, fullPath);
+	WriteHFile(systemData, fullPath);
+	WriteToMainCPP(systemData, cudaynamicsPath);
+	WriteToSystemHeaders(systemData, cudaynamicsPath);
+	WriteToVCXPROJFile(systemData, cudaynamicsPath);
+	WriteToCudaynamicsProjFilters(systemData, cudaynamicsPath);
+}
+
+void WriteToMainCPP(systemStruct systemData, std::filesystem::path cudaynamicsPath) {
+	std::wstring tmpPath = (cudaynamicsPath / "main.cpp").wstring();
+	std::ofstream OutputTXT("temp/tempCPPfile.cpp");
+	std::ifstream InputCPP(tmpPath);
+
+	std::string line;
+	while (std::getline(InputCPP, line)) {
+		if (line.find("    selectKernel") != std::string::npos) {
+			OutputTXT << "    addKernel(" << systemData.systemNameCode << ");\n";
+			OutputTXT << line << '\n';
+		}
+		else {
+			OutputTXT << line << '\n';
+		}
+	}
+
+	InputCPP.close();
+	OutputTXT.close();
+
+	std::filesystem::copy_file("temp/tempCPPfile.cpp", tmpPath, std::filesystem::copy_options::overwrite_existing);
+
+}
+
+void WriteToSystemHeaders(systemStruct systemData, std::filesystem::path cudaynamicsPath) {
+	std::wstring tmpPath = (cudaynamicsPath / "systemsHeaders.h").wstring();
+	std::ofstream OutputTXT(tmpPath, std::ios::app);
+	OutputTXT << "\n#include \"systems/"<<systemData.systemNameCode<<"/"<<systemData.systemNameCode<<".h\"";
+	OutputTXT.close();
+
+}
+
+void WriteToVCXPROJFile(systemStruct systemData, std::filesystem::path cudaynamicsPath) {
+	std::wstring tmpPath = (cudaynamicsPath / "CUDAynamics.vcxproj").wstring();
+	std::ofstream OutputTXT("temp/tempCPPfile.cpp");
+	std::ifstream InputCPP(tmpPath);
+
+	std::string line;
+	while (std::getline(InputCPP, line)) {
+		if (line.find("<CudaCompile Include=\"gpu_variation.cu\" />") != std::string::npos) {
+			OutputTXT << line << '\n';
+			OutputTXT << "    <CudaCompile Include=\"systems\\" << systemData.systemNameCode << "\\" << systemData.systemNameCode << ".cu\" />\n";
+
+		}
+		else {
+			OutputTXT << line << '\n';
+		}
+	}
+
+	InputCPP.close();
+	OutputTXT.close();
+
+	std::filesystem::copy_file("temp/tempCPPfile.cpp", tmpPath, std::filesystem::copy_options::overwrite_existing);
+}
+
+void WriteToCudaynamicsProjFilters(systemStruct systemData, std::filesystem::path cudaynamicsPath) {
+	std::wstring tmpPath = (cudaynamicsPath / "CUDAynamics.vcxproj.filters").wstring();
+	std::ofstream OutputTXT("temp/tempCPPfile.cpp");
+	std::ifstream InputCPP(tmpPath);
+
+	std::string line;
+	while (std::getline(InputCPP, line)) {
+		if (line.find("<CudaCompile Include=\"main.cu\" />") != std::string::npos) {
+			OutputTXT << line << '\n';
+			OutputTXT << "    <CudaCompile Include=\"systems\\" << systemData.systemNameCode << "\\" << systemData.systemNameCode << ".cu\">\n";
+			OutputTXT << "      <Filter>systems</Filter>\n";
+			OutputTXT << "    </CudaCompile>\n";
+
+		}
+		else {
+			OutputTXT << line << '\n';
+		}
+	}
+
+	InputCPP.close();
+	OutputTXT.close();
+
+	std::filesystem::copy_file("temp/tempCPPfile.cpp", tmpPath, std::filesystem::copy_options::overwrite_existing);
+}
+
+void WriteTXT(systemStruct systemData, std::filesystem::path cudaynamicsPath) {
+	std::string tmp = systemData.systemNameCode + ".txt";
+	std::ofstream OutputTXT(cudaynamicsPath / tmp);
 	OutputTXT << "Name: " << systemData.systemNameTXT << " system\n" << "Steps: 10000\n"<< "Transient: 10000\n";
 	OutputTXT << "// Defining step: \n"
 		<< "// parameter/variable/discrete\n"
@@ -42,7 +135,7 @@ void WriteTXT(systemStruct systemData) {
 	
 	if (hasSignal)OutputTXT << "enum signal 1square 0sine 0triangle\n";
 
-	OutputTXT<< "enum method 1ExplicitEuler 0SemiExplicitEuler 0ExplicitMidpoint 0ExplicitRungeKutta4 0VariableSymmetryCD\n"
+	OutputTXT<< "enum method 1ExplicitEuler 0SemiExplicitEuler 0ExplicitMidpoint 0ExplicitRungeKutta4 0ExplicitDormandPrince8\n"  // NO VSCD
 		<< "// Defining settings for analysis functions:\n"
 		<< "// analysis <name from \"anfunc_names.cpp\"> settings <values, must exactly match the settings struct> \n"
 		<< "analysis Minimum / maximum settings 2 2\n"
@@ -52,8 +145,9 @@ void WriteTXT(systemStruct systemData) {
 
 }
 
-void WriteHFile(systemStruct systemData) {
-	std::ofstream OutputTXT("systems/" + systemData.systemNameCode + "/" + systemData.systemNameCode + ".h");
+void WriteHFile(systemStruct systemData, std::filesystem::path cudaynamicsPath) {
+	std::string tmp = systemData.systemNameCode + ".h";
+	std::ofstream OutputTXT(cudaynamicsPath / tmp);
 	OutputTXT << "#pragma once\n#include <kernels_common.h>\n\n"
 		<< "#define name " << systemData.systemNameCode << "\n\n"
 		<< "const int THREADS_PER_BLOCK_(name) = 64;\n\n"
@@ -65,9 +159,10 @@ void WriteHFile(systemStruct systemData) {
 	OutputTXT.close();
 }
 
-void WriteCuFile(systemStruct systemData) {
-	std::ofstream OutputTXT("systems/" + systemData.systemNameCode + "/" + systemData.systemNameCode + ".cu");
-	OutputTXT << "#include \"" + systemData.systemNameCode + ".h \"\n";
+void WriteCuFile(systemStruct systemData, std::filesystem::path cudaynamicsPath) {
+	std::string tmp = systemData.systemNameCode + ".cu";
+	std::ofstream OutputTXT(cudaynamicsPath / tmp);
+	OutputTXT << R"(#include ")" << systemData.systemNameCode << R"(.h")" << std::endl;
 	OutputTXT << "#define name " << systemData.systemNameCode << "\n\n";
 
 	OutputTXT << "namespace attributes\n{\n";
@@ -96,7 +191,7 @@ void WriteCuFile(systemStruct systemData) {
 	if (hasSignal)OutputTXT << "enum waveforms { square, sine, triangle };\n";
 
 	OutputTXT << "enum methods { ";
-	OutputTXT << "ExplicitEuler,  SemiExplicitEuler, ExplicitMidpoint, ExplicitRungeKutta4, VariableSymmetryCD};\n}\n\n";
+	OutputTXT << "ExplicitEuler,  SemiExplicitEuler, ExplicitMidpoint, ExplicitRungeKutta4, ExplicitDormandPrince8};\n}\n\n"; // NO VSCD
 
 	OutputTXT << "__global__ void gpu_wrapper_(name)(Computation* data, uint64_t variation)\n"
 		<< "{\n    kernelProgram_(name)(data, (blockIdx.x* blockDim.x) + threadIdx.x);\n}\n";
@@ -349,7 +444,57 @@ void WriteCuFile(systemStruct systemData) {
 		OutputTXT << "    }\n\n";
 		//			EXPLICIT RK4
 
-		//			EXPLICIT VSCD
+		//			ExplicitDormandPrince8
+		OutputTXT << "    ifMETHOD(P(method), ExplicitDormandPrince8)\n    {\n";
+
+		OutputTXT << "			const numb M[13][12] = { {(numb)0.0, (numb)0.0, (numb)0.0, (numb)0.0, (numb)0.0, (numb)0.0, (numb)0.0, (numb)0.0, (numb)0.0, (numb)0.0, (numb)0.0, (numb)0.0},\n"
+			<<"								{(numb)0.05555555555556, (numb)0.0, (numb)0.0, (numb)0.0, (numb)0.0, (numb)0.0, (numb)0.0, (numb)0.0, (numb)0.0, (numb)0.0, (numb)0.0, (numb)0.0},\n"
+			<<"								{(numb)0.02083333333333, (numb)0.0625, (numb)0.0, (numb)0.0, (numb)0.0, (numb)0.0, (numb)0.0, (numb)0.0, (numb)0.0, (numb)0.0, (numb)0.0, (numb)0.0},\n"
+			<<"								{(numb)0.03125, (numb)0.0, (numb)0.09375, (numb)0.0, (numb)0.0, (numb)0.0, (numb)0.0, (numb)0.0, (numb)0.0, (numb)0.0, (numb)0.0, (numb)0.0},\n"
+			<<"								{(numb)0.3125, (numb)0.0, -(numb)1.171875, (numb)1.171875, (numb)0.0, (numb)0.0, (numb)0.0, (numb)0.0, (numb)0.0, (numb)0.0, (numb)0.0, (numb)0.0},\n"
+			<<"								{(numb)0.0375, (numb)0.0, (numb)0.0, (numb)0.1875, (numb)0.15, (numb)0.0, (numb)0.0, (numb)0.0, (numb)0.0, (numb)0.0, (numb)0.0, (numb)0.0},\n"
+			<<"								{(numb)0.04791013711111, (numb)0.0, (numb)0.0, (numb)0.1122487127778, -(numb)0.02550567377778, (numb)0.01284682388889, (numb)0.0, (numb)0.0, (numb)0.0, (numb)0.0, (numb)0.0, (numb)0.0},\n"
+			<<"								{(numb)0.01691798978729, (numb)0.0, (numb)0.0, (numb)0.387848278486, (numb)0.0359773698515, (numb)0.1969702142157, -(numb)0.1727138523405, (numb)0.0, (numb)0.0, (numb)0.0, (numb)0.0, (numb)0.0},\n"
+			<<"								{(numb)0.06909575335919, (numb)0.0, (numb)0.0, -(numb)0.6342479767289, -(numb)0.1611975752246, (numb)0.1386503094588, (numb)0.9409286140358, (numb)0.2116363264819, (numb)0.0, (numb)0.0, (numb)0.0, (numb)0.0},\n"
+			<<"								{(numb)0.183556996839, (numb)0.0, (numb)0.0, -(numb)2.468768084316, -(numb)0.2912868878163, -(numb)0.02647302023312, (numb)2.847838764193, (numb)0.2813873314699, (numb)0.1237448998633, (numb)0.0, (numb)0.0, (numb)0.0},\n"
+			<<"								{-(numb)1.215424817396, (numb)0.0, (numb)0.0, (numb)16.67260866595, (numb)0.9157418284168, -(numb)6.056605804357, -(numb)16.00357359416, (numb)14.8493030863, -(numb)13.37157573529, (numb)5.13418264818, (numb)0.0, (numb)0.0},\n"
+			<<"								{-(numb)1.215424817396, (numb)0.0, (numb)0.0, (numb)16.67260866595, (numb)0.9157418284168, -(numb)6.056605804357, -(numb)16.00357359416, (numb)14.8493030863, -(numb)13.37157573529, (numb)5.13418264818, (numb)0.0, (numb)0.0},\n"
+			<<"								{(numb)0.2588609164383, (numb)0.0, (numb)0.0, -(numb)4.774485785489, -(numb)0.435093013777, -(numb)3.049483332072, (numb)5.577920039936, (numb)6.155831589861, -(numb)5.062104586737, (numb)2.193926173181, (numb)0.1346279986593, (numb)0.0},\n"
+			<<"								{(numb)0.8224275996265, (numb)0.0, (numb)0.0, -(numb)11.65867325728, -(numb)0.7576221166909, (numb)0.7139735881596, (numb)12.07577498689, -(numb)2.12765911392, (numb)1.990166207049, -(numb)0.234286471544, (numb)0.1758985777079, (numb)0.0} };\n\n";
+
+		OutputTXT << "			const numb b[13] = { (numb)0.04174749114153, (numb)0.0, (numb)0.0, (numb)0.0, (numb)0.0, -(numb)0.05545232861124, (numb)0.2393128072012, (numb)0.7035106694034, -(numb)0.7597596138145, (numb)0.6605630309223, (numb)0.1581874825101, -(numb)0.2381095387529, (numb)0.25 };\n";
+
+
+
+		if (hasSignal)
+			for (int i = 0; i < systemData.varNames.size(); i++) {
+				if (systemData.varEqs[i] == "signal") {
+					if (signal == 0) OutputTXT << "        Vnext(" << systemData.varNames[i] << ") = P(" << systemData.varNames[i] << "dc) + (fmod((V(t) - P(" << systemData.varNames[i] << "del)) > 0 ? "
+						<< "(V(t) - P(" << systemData.varNames[i] << "del)) : (P(" << systemData.varNames[i] << "df) / P(" << systemData.varNames[i] << "freq) + P(" << systemData.varNames[i] << "del) - V(t))"
+						<< ", 1 / P(" << systemData.varNames[i] << "freq)) < P(" << systemData.varNames[i] << "df) / P(" << systemData.varNames[i] << "freq) ? P(" << systemData.varNames[i] << "amp) : (numb)0.0);\n";
+					if (signal == 1) OutputTXT << "        Vnext(" << systemData.varNames[i] << ") = P(" << systemData.varNames[i] << "dc) + P(" << systemData.varNames[i] << "amp) * sin((numb)2.0 * (numb)3.141592653589793"
+						<< " * P(" << systemData.varNames[i] << "freq) * (V(t) - P(" << systemData.varNames[i] << "del)));\n";
+					if (signal == 2) OutputTXT << "        Vnext(" << systemData.varNames[i] << ") = P(" << systemData.varNames[i] << "dc) + P(" << systemData.varNames[i] << "amp) * (((numb)4.0 * P(" << systemData.varNames[i] << "freq)"
+						<< " * (V(t) - P(" << systemData.varNames[i] << "del)) - (numb)2.0 * floor(((numb)4.0 * P(" << systemData.varNames[i] << "del) * (V(t) - P(" << systemData.varNames[i] << "del)) + (numb)1.0) / (numb)2.0))"
+						<< " * ((int)floor(((numb)4.0 *P( " << systemData.varNames[i] << "freq) * (V(t) - P(" << systemData.varNames[i] << "del)) + (numb)1.0) / (numb)2.0) % 2 == 0 ? (numb)1.0 : (numb)-1.0));\n";
+				}
+			}
+
+		for (int i = 0; i < systemData.varNames.size(); i++) {
+			if (systemData.varEqs[i] == "Time") {
+				OutputTXT << "        Vnext(" << systemData.varNames[i] << ") = V(" << systemData.varNames[i] << ")" << " + H;\n";
+			}
+
+			else if (systemData.varEqs[i] != "signal") {
+				OutputTXT << "        Vnext(" << systemData.varNames[i] << ") = V(" << systemData.varNames[i] << ")" << " + H * (" << ChangeEqsToKernelExplicitEuler(systemData, systemData.varEqs[i]) << ");\n";
+			}
+		}
+
+		OutputTXT << "    }\n\n";
+		//			ExplicitDormandPrince8
+
+		/*
+		//			 VSCD
 		OutputTXT << "    ifMETHOD(P(method), VariableSymmetryCD)\n    {\n";
 		OutputTXT << "        numb h1 = (numb)0.5 * H - P(symmetry);\n        numb h2 = (numb)0.5 * H + P(symmetry);\n";
 
@@ -409,7 +554,8 @@ void WriteCuFile(systemStruct systemData) {
 		//			IMPLICITNESS
 
 		OutputTXT << "    }\n\n";
-		//			EXPLICIT VSCD
+		//			 VSCD
+		*/
 
 		if(hasSignal)OutputTXT<< "    }\n\n";
 
