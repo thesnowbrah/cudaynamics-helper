@@ -206,7 +206,7 @@ int main(int, char**)
             
             for (int i = 0; i < varAmount; i++) {
                 bool isSignal;
-                std::string labelText = "Derivative of Variable " + std::to_string(i + 1) + ":";
+                std::string labelText = "Diff. Eq-n of Variable " + std::to_string(i + 1) + ":";
                 ImGui::Text("%s", labelText.c_str());
                 ImGui::SameLine();
 
