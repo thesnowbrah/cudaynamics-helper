@@ -178,7 +178,7 @@ void WriteCuFile(systemStruct systemData, std::filesystem::path cudaynamicsPath)
 	for (int i = 0; i < systemData.parameters.size(); i++) {
 		OutputTXT <<  systemData.parameters[i] << ", ";
 	}
-	OutputTXT << "symmetry, method, COUNT };\n";
+	OutputTXT << "method, COUNT };\n"; //symmetry,
 
 	bool hasSignal = false;
 
