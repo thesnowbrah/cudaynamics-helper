@@ -86,7 +86,7 @@ int findingParameters(systemStruct *systemData) {
 			}
 
 			if (timeToCheck || j == systemData->varEqs[i].size() - 1) {
-				if (tempStr!="log" && tempStr != "fabs" && tempStr != "exp" && tempStr != "pow" && tempStr != "sin" && tempStr != "cos" && tempStr != "fmod" && tempStr != "signal") {
+				if (tempStr!="log" && tempStr != "fabs" && tempStr != "exp" && tempStr != "pow" && tempStr != "sin" && tempStr != "cos" && tempStr != "fmod" && tempStr != "signal" && tempStr != "fmin" && tempStr != "fmax" && tempStr != "min" && tempStr != "max" && tempStr != "abs" ) {
 					bool isVarOrPar = false;
 					for (int var = 0; var < systemData->varNames.size(); var++) {
 						if (tempStr == systemData->varNames[var]) { isVarOrPar = true; break; }

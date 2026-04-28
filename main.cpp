@@ -80,6 +80,7 @@ int main(int, char**)
     std::string systemName;
     std::vector<std::string> varNames;
     std::vector<std::string> varEqs;
+    std::vector<bool> isDerivative;
     int varAmount = 0;
     bool codeC = true;
     bool valuesNotCorrect = false;
@@ -185,6 +186,7 @@ int main(int, char**)
                 for (int i = 0; i < varAmount; i++) {
                     varNames.pop_back();
                     varEqs.pop_back();
+                    isDerivative.pop_back();
                 }
                 varAmount = 0;
                 systemName = "";
@@ -206,13 +208,21 @@ int main(int, char**)
             
             for (int i = 0; i < varAmount; i++) {
                 bool isSignal;
-                std::string labelText = "Diff. Eq-n of Variable " + std::to_string(i + 1) + ":";
-                ImGui::Text("%s", labelText.c_str());
+                if (isDerivative[i] == true) {
+                    std::string labelText = "Diff. Eq-n of Variable " + std::to_string(i + 1) + ":";
+                    ImGui::Text("%s", labelText.c_str());
+                }
+                else {
+                    std::string labelText = "Eq-n of Variable " + std::to_string(i + 1) + ":";
+                    ImGui::Text("%s", labelText.c_str());
+                }
+                
                 ImGui::SameLine();
 
                 std::string inputID = "##Variable" + std::to_string(i);
 
-                ImGui::PushItemWidth(150.0f);
+                if (isDerivative[i] == true) ImGui::PushItemWidth((ImGui::GetWindowWidth() - ImGui::CalcTextSize("Diff. Eq-n of Variable ").x)* 0.2f);
+                else ImGui::PushItemWidth((ImGui::GetWindowWidth() - ImGui::CalcTextSize("Eq-n of Variable ").x) * 0.2f);
                 ImGui::InputText(inputID.c_str(), &varNames[i]);
                 ImGui::PopItemWidth();
 
@@ -226,7 +236,8 @@ int main(int, char**)
                 else {
                     isSignal = false;
                     inputID = "##Equation" + std::to_string(i);
-                    ImGui::PushItemWidth(300.0f);
+                    if (isDerivative[i] == true) ImGui::PushItemWidth((ImGui::GetWindowWidth() - ImGui::CalcTextSize("Diff. Eq-n of Variable ").x)* 0.6f);
+                    else ImGui::PushItemWidth((ImGui::GetWindowWidth() - ImGui::CalcTextSize("Eq-n of Variable ").x) * 0.6f);
                     ImGui::InputText(inputID.c_str(), &varEqs[i]);
                     ImGui::PopItemWidth();
                 }
@@ -248,8 +259,16 @@ int main(int, char**)
                 ImGui::SameLine();
                 inputID = "Is Signal##" + std::to_string(i);
                 ImGui::Checkbox(inputID.c_str(), &isSignal);
-                if (isSignal) { varEqs[i] = "signal"; }
-                else if (varEqs[i] == "signal") { varEqs[i] = ""; }
+                if (isSignal) { varEqs[i] = "signal"; isDerivative[i] = false; }
+                else if (varEqs[i] == "signal") { varEqs[i] = ""; isDerivative[i] = true; }
+
+                ImGui::SameLine();
+                ImGui::Text("       ");
+                ImGui::SameLine();
+                inputID = "Is Diff Eq-n##" + std::to_string(i);
+                bool tmpbool = isDerivative[i];
+                ImGui::Checkbox(inputID.c_str(), &tmpbool);
+                isDerivative[i] = tmpbool;
 
                 ImGui::Text(" ");
 
@@ -258,6 +277,8 @@ int main(int, char**)
                 varAmount++;
                 varNames.push_back("");
                 varEqs.push_back("");
+                isDerivative.push_back(true);
+                
             }
 
             ImGui::Text(" ");
@@ -291,6 +312,7 @@ int main(int, char**)
                     systemData.systemNameTXT = systemName;
                     systemData.varNames = varNames;
                     systemData.varEqs = varEqs;
+                    systemData.isDerivative = isDerivative;
                     
                     mainDataProcess(&systemData);
 

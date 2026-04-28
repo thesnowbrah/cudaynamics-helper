@@ -9,6 +9,7 @@ struct systemStruct {
 	std::vector<std::string> varNamesCode;
 	std::vector<std::string> varEqs;
 	std::vector<std::string> parameters;
+	std::vector<bool> isDerivative;
 
 	systemStruct() 
 	{
