@@ -135,7 +135,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="CopyDataFromFile.cpp" />
+    <ClCompile Include="ParseFromInput.cpp" />
     <ClCompile Include="imgui\backends\imgui_impl_dx11.cpp" />
     <ClCompile Include="imgui\backends\imgui_impl_win32.cpp" />
     <ClCompile Include="imgui\imgui.cpp" />
@@ -148,7 +148,8 @@
     <ClCompile Include="WriteToFiles.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="CopyDataFromFile.h" />
+    <ClInclude Include="ParseFromInput.h" />
+    <ClInclude Include="CudaynamicsDirectory.h" />
     <ClInclude Include="SystemStruct.h" />
     <ClInclude Include="WriteToFiles.h" />
   </ItemGroup>

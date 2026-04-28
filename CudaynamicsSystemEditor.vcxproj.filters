@@ -24,7 +24,7 @@
     <ClCompile Include="WriteToFiles.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="CopyDataFromFile.cpp">
+    <ClCompile Include="ParseFromInput.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="imgui\imgui.cpp">
@@ -59,7 +59,10 @@
     <ClInclude Include="WriteToFiles.h">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="CopyDataFromFile.h">
+    <ClInclude Include="ParseFromInput.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CudaynamicsDirectory.h">
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>
