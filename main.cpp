@@ -197,6 +197,13 @@ int main(int, char**)
             ImGui::SetCursorPosX((ImGui::GetWindowWidth() - ImGui::CalcTextSize("Create system").x) * 0.5f);
             ImGui::Text("Create system");
             ImGui::PopFont();
+            ImGui::SameLine();
+            ImGui::SetCursorPosX((ImGui::GetWindowWidth()) * 0.92f);
+
+            if (ImGui::Button("?", ImVec2(30, 0))) {
+                /// ADD CODE FOR SECONDARY WINDOW HERE
+            }
+
             ImGui::Separator();
 
             ImGui::Checkbox("C++ code", &codeC);
@@ -236,8 +243,8 @@ int main(int, char**)
                 else {
                     isSignal = false;
                     inputID = "##Equation" + std::to_string(i);
-                    if (isDerivative[i] == true) ImGui::PushItemWidth((ImGui::GetWindowWidth() - ImGui::CalcTextSize("Diff. Eq-n of Variable ").x)* 0.6f);
-                    else ImGui::PushItemWidth((ImGui::GetWindowWidth() - ImGui::CalcTextSize("Eq-n of Variable ").x) * 0.6f);
+                    if (isDerivative[i] == true) ImGui::PushItemWidth((ImGui::GetWindowWidth() - ImGui::CalcTextSize("Diff. Eq-n of Variable ").x)* 0.55f);
+                    else ImGui::PushItemWidth((ImGui::GetWindowWidth() - ImGui::CalcTextSize("Eq-n of Variable ").x) * 0.55f);
                     ImGui::InputText(inputID.c_str(), &varEqs[i]);
                     ImGui::PopItemWidth();
                 }
