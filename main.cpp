@@ -15,7 +15,7 @@
 #include <string>
 #include <fstream>
 
-#include "CopyDataFromFile.h"
+#include "ParseFromInput.h"
 #include "WriteToFiles.h"
 #include "CudaynamicsDirectory.h"
 
@@ -171,7 +171,7 @@ int main(int, char**)
 
             if (button2_clicked)
             {
-                ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.0f, 1.0f), "✓ Button 2 was clicked!");
+                ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.0f, 1.0f), "Button 2 was clicked!");
                 button2_clicked = false; 
             }
 
