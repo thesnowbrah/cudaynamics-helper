@@ -507,14 +507,14 @@ void WriteCuFile(systemStruct systemData, std::filesystem::path cudaynamicsPath)
 		for (int i = 0; i < systemData.varEqs.size(); i++) {
 			if (systemData.varEqs[i] == "signal")
 			{
-				if (signal == 0) OutputTXT << "        " << systemData.varNames[i] << "mp = P(" << systemData.varNames[i] << "dc) + (fmod((v["<< timeNum <<"] - P(" << systemData.varNames[i] << "del)) > 0 ? "
-					<< "(v[" << timeNum << "] - P(" << systemData.varNames[i] << "del)) : (P(" << systemData.varNames[i] << "df) / P(" << systemData.varNames[i] << "freq) + P(" << systemData.varNames[i] << "del) - v[" << timeNum << "])"
+				if (signal == 0) OutputTXT << "        " << systemData.varNames[i] << "mp = P(" << systemData.varNames[i] << "dc) + (fmod((X1["<< timeNum <<"] - P(" << systemData.varNames[i] << "del)) > 0 ? "
+					<< "(X1[" << timeNum << "] - P(" << systemData.varNames[i] << "del)) : (P(" << systemData.varNames[i] << "df) / P(" << systemData.varNames[i] << "freq) + P(" << systemData.varNames[i] << "del) -X1[" << timeNum << "])"
 					<< ", 1 / P(" << systemData.varNames[i] << "freq)) < P(" << systemData.varNames[i] << "df) / P(" << systemData.varNames[i] << "freq) ? P(" << systemData.varNames[i] << "amp) : (numb)0.0);\n";
 				if (signal == 1) OutputTXT << "        " << systemData.varNames[i] << "mp = P(" << systemData.varNames[i] << "dc) + P(" << systemData.varNames[i] << "amp) * sin((numb)2.0 * (numb)3.141592653589793"
-					<< " * P(" << systemData.varNames[i] << "freq) * (v[" << timeNum << "] - P(" << systemData.varNames[i] << "del)));\n";
+					<< " * P(" << systemData.varNames[i] << "freq) * (X1[" << timeNum << "] - P(" << systemData.varNames[i] << "del)));\n";
 				if (signal == 2) OutputTXT << "        " << systemData.varNames[i] << "mp = P(" << systemData.varNames[i] << "dc) + P(" << systemData.varNames[i] << "amp) * (((numb)4.0 * P(" << systemData.varNames[i] << "freq)"
 					<< " * (v[" << timeNum << "] - P(" << systemData.varNames[i] << "del)) - (numb)2.0 * floor(((numb)4.0 * P(" << systemData.varNames[i] << "del) * (v[" << timeNum << "] - P(" << systemData.varNames[i] << "del)) + (numb)1.0) / (numb)2.0))"
-					<< " * ((int)floor(((numb)4.0 *P( " << systemData.varNames[i] << "freq) * (v[" << timeNum << "] - P(" << systemData.varNames[i] << "del)) + (numb)1.0) / (numb)2.0) % 2 == 0 ? (numb)1.0 : (numb)-1.0));\n";
+					<< " * ((int)floor(((numb)4.0 *P( " << systemData.varNames[i] << "freq) * (X1[" << timeNum << "] - P(" << systemData.varNames[i] << "del)) + (numb)1.0) / (numb)2.0) % 2 == 0 ? (numb)1.0 : (numb)-1.0));\n";
 
 			}
 		}
