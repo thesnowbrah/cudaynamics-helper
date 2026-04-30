@@ -17,7 +17,7 @@ std::string CleanupEqsForCode(std::string original) {
 	int replacingPow = 0;
 
 	if (original == "signal") return "signal";
-
+	if (original == "Time") return "Time";
 	if (original[0] > 47 && original[0] < 58) { result = "(numb)"; result += original[0]; }
 	else { result = original[0]; }
 	for (int i = 1; i < original.size(); i++) {
@@ -86,7 +86,7 @@ int findingParameters(systemStruct *systemData) {
 			}
 
 			if (timeToCheck || j == systemData->varEqs[i].size() - 1) {
-				if (tempStr!="log" && tempStr != "fabs" && tempStr != "exp" && tempStr != "pow" && tempStr != "sin" && tempStr != "cos" && tempStr != "fmod" && tempStr != "signal" && tempStr != "fmin" && tempStr != "fmax" && tempStr != "min" && tempStr != "max" && tempStr != "abs" ) {
+				if (tempStr!="log" && tempStr != "fabs" && tempStr != "exp" && tempStr != "pow" && tempStr != "sin" && tempStr != "cos" && tempStr != "fmod" && tempStr != "signal" && tempStr != "fmin" && tempStr != "fmax" && tempStr != "min" && tempStr != "max" && tempStr != "abs" && tempStr != "sqrt") {
 					bool isVarOrPar = false;
 					for (int var = 0; var < systemData->varNames.size(); var++) {
 						if (tempStr == systemData->varNames[var]) { isVarOrPar = true; break; }
@@ -129,7 +129,9 @@ int checkForSignalVars(systemStruct* systemData) {
 	if (signalVarFound) {
 		systemData->parameters.push_back("signal");
 		systemData->varNames.push_back("t");
+		systemData->varNamesCode.push_back("t");
 		systemData->varEqs.push_back("Time");
+		systemData->isDerivative.push_back(true);
 	}
 
 	return 0;

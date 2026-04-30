@@ -43,6 +43,8 @@ std::filesystem::path getExecutableDirectory();
 int main(int, char**)
 {
     // Create application window
+    //ImGui_ImplWin32_EnableDpiAwareness();
+    //WNDCLASSEXW wc = { sizeof(wc), CS_CLASSDC, WndProc, 0L, 0L, GetModuleHandle(nullptr) };
     WNDCLASSEXW wc = { sizeof(wc), CS_CLASSDC, WndProc, 0L, 0L, GetModuleHandle(nullptr), nullptr, nullptr, nullptr, nullptr, L"CUDAynamicsEditor", nullptr };
     ::RegisterClassExW(&wc);
     HWND hwnd = ::CreateWindowW(wc.lpszClassName, L"CUDAynamics System Editor", WS_OVERLAPPEDWINDOW, 100, 100, 800, 500, nullptr, nullptr, wc.hInstance, nullptr);
@@ -86,7 +88,7 @@ int main(int, char**)
     bool codeC = true;
     bool valuesNotCorrect = false;
     bool valuesNotMatching = false;
-
+    bool showHelpWindow = false;
 
     // Main loop
     bool done = false;
@@ -202,7 +204,28 @@ int main(int, char**)
             ImGui::SetCursorPosX((ImGui::GetWindowWidth()) * 0.92f);
 
             if (ImGui::Button("?", ImVec2(30, 0))) {
-                /// ADD CODE FOR SECONDARY WINDOW HERE
+                showHelpWindow = !showHelpWindow; 
+            }
+            if (showHelpWindow)
+            {
+                ImGui::SetNextWindowSize(ImVec2(400, 300), ImGuiCond_FirstUseEver);
+                if (ImGui::Begin("System Editor Help", &showHelpWindow, ImGuiWindowFlags_NoCollapse))
+                {
+                    ImGui::Text("Help Information");
+                    ImGui::Separator();
+                    ImGui::Text("How to create a system:");
+                    ImGui::BulletText("Enter a system name");
+                    ImGui::BulletText("Click '+' to add variables");
+                    ImGui::BulletText("Enter variable names and equations");
+                    ImGui::BulletText("Use the checkboxes to toggle between equation types");
+                    ImGui::BulletText("Click 'X' to remove a variable");
+                    ImGui::BulletText("Variable names must be unique and contain no special characters,\n   except \"_\" and spaces");
+                    ImGui::BulletText("Equations must contain only allowed mathematical operations");
+                    ImGui::BulletText("Click 'Create' to generate the system");
+                    ImGui::Separator();
+                    ImGui::Text("Equations are expected to be written in C++ expressions (without semicolo \";\").\nAllowed functions are as follows: abs, fabs, exp, sqrt,\n   pow, sin, cos, log, min, max, fmin, fmax, fmod.\nTernary conditional statements are also allowed\n   condition ? value_if_true : value_if_false\n   Ex: var1 < par ? par : var1 ");
+                }
+                ImGui::End();
             }
 
             ImGui::Separator();
@@ -255,6 +278,7 @@ int main(int, char**)
                 if (ImGui::Button("X")) {
                     varNames.erase(varNames.begin() + i);
                     varEqs.erase(varEqs.begin() + i);
+                    isDerivative.erase(isDerivative.begin() + i);
                     varAmount--;
                     i--;
                 }
@@ -337,6 +361,7 @@ int main(int, char**)
                     for (int i = 0; i < varAmount; i++) {
                         varNames.pop_back();
                         varEqs.pop_back();
+                        isDerivative.pop_back();
                     }
                     varAmount = 0;
                     systemName = "";

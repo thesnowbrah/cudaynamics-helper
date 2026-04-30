@@ -185,6 +185,7 @@ void WriteCuFile(systemStruct systemData, std::filesystem::path cudaynamicsPath)
 	for (int i = 0; i < systemData.varNames.size(); i++) {
 		if (systemData.varEqs[i] == "signal") {
 			hasSignal = true;
+			break;
 		}
 	}
 
@@ -259,7 +260,7 @@ void WriteCuFile(systemStruct systemData, std::filesystem::path cudaynamicsPath)
 
 			else if (systemData.varEqs[i] != "signal") {
 				if(systemData.isDerivative[i])OutputTXT << "        Vnext(" << systemData.varNames[i] << ") = V(" << systemData.varNames[i] << ")" << " + H * (" << ChangeEqsToKernelExplicitEuler(systemData, systemData.varEqs[i]) << ");\n";
-				else OutputTXT << "        Vnext(" << systemData.varNames[i] << ") = "  << ChangeEqsToKernelExplicitEuler(systemData, systemData.varEqs[i]) << ";\n";
+				else if(systemData.varEqs[i]!="signal")OutputTXT << "        Vnext(" << systemData.varNames[i] << ") = " << ChangeEqsToKernelExplicitEuler(systemData, systemData.varEqs[i]) << ";\n";
 			}
 		}
 
@@ -290,7 +291,7 @@ void WriteCuFile(systemStruct systemData, std::filesystem::path cudaynamicsPath)
 
 			else if (systemData.varEqs[i] != "signal"){
 				if(systemData.isDerivative[i])OutputTXT << "        Vnext(" << systemData.varNames[i] << ") = V(" << systemData.varNames[i] << ")" << " + H * (" << ChangeEqsToKernelSemiExplicit(systemData, systemData.varEqs[i], i) << ");\n";
-				else OutputTXT << "        Vnext(" << systemData.varNames[i] << ") = " << ChangeEqsToKernelSemiExplicit(systemData, systemData.varEqs[i], i) << ";\n";
+				else  if (systemData.varEqs[i] != "signal")OutputTXT << "        Vnext(" << systemData.varNames[i] << ") = " << ChangeEqsToKernelSemiExplicit(systemData, systemData.varEqs[i], i) << ";\n";
 			}
 		}
 
@@ -320,7 +321,7 @@ void WriteCuFile(systemStruct systemData, std::filesystem::path cudaynamicsPath)
 
 			else if (systemData.varEqs[i] != "signal"){
 				if(systemData.isDerivative[i])OutputTXT << "        numb " << systemData.varNames[i] << "mp = V(" << systemData.varNames[i] << ")" << " + (numb)0.5 * H * (" << ChangeEqsToKernelExplicitEuler(systemData, systemData.varEqs[i]) << ");\n";
-				else OutputTXT << "        numb " << systemData.varNames[i] << "mp = "  << ChangeEqsToKernelExplicitEuler(systemData, systemData.varEqs[i]) << ";\n";
+				else if (systemData.varEqs[i] != "signal") OutputTXT << "        numb " << systemData.varNames[i] << "mp = "  << ChangeEqsToKernelExplicitEuler(systemData, systemData.varEqs[i]) << ";\n";
 			}
 		}
 
@@ -345,7 +346,7 @@ void WriteCuFile(systemStruct systemData, std::filesystem::path cudaynamicsPath)
 
 			else if(systemData.varEqs[i] != "signal") {
 				if(systemData.isDerivative[i])OutputTXT << "        Vnext(" << systemData.varNames[i] << ") = V(" << systemData.varNames[i] << ")" << " + H * (" << ChangeEqsToKernelExplicitMidpoint(systemData, systemData.varEqs[i]) << ");\n";
-				else OutputTXT << "        Vnext(" << systemData.varNames[i] << ") = " << ChangeEqsToKernelExplicitMidpoint(systemData, systemData.varEqs[i]) << ";\n";
+				else  if (systemData.varEqs[i] != "signal")OutputTXT << "        Vnext(" << systemData.varNames[i] << ") = " << ChangeEqsToKernelExplicitMidpoint(systemData, systemData.varEqs[i]) << ";\n";
 			}
 		}
 
@@ -383,7 +384,7 @@ void WriteCuFile(systemStruct systemData, std::filesystem::path cudaynamicsPath)
 		for (int i = 0; i < systemData.varNames.size(); i++) {
 			if (systemData.varEqs[i] != "signal") {
 				if (systemData.isDerivative[i]) OutputTXT << "        numb " << systemData.varNames[i] << "mp = V(" << systemData.varNames[i] << ")" << " + (numb)0.5 * H * k" << systemData.varNames[i] << "1;\n";
-				else OutputTXT << "        numb " << systemData.varNames[i] << "mp = k" << systemData.varNames[i] << "1;\n";;
+				else if (systemData.varEqs[i] != "signal") OutputTXT << "        numb " << systemData.varNames[i] << "mp = k" << systemData.varNames[i] << "1;\n";;
 			}
 		}
 		OutputTXT << "\n";
@@ -415,7 +416,7 @@ void WriteCuFile(systemStruct systemData, std::filesystem::path cudaynamicsPath)
 		for (int i = 0; i < systemData.varNames.size(); i++) {
 			if (systemData.varEqs[i] != "signal") {
 				if(systemData.isDerivative[i])OutputTXT << "        " << systemData.varNames[i] << "mp = V(" << systemData.varNames[i] << ")" << " + (numb)0.5 * H * k" << systemData.varNames[i] << "2;\n";
-				else OutputTXT << "        " << systemData.varNames[i] << "mp = k" << systemData.varNames[i] << "2;\n";
+				else if (systemData.varEqs[i] != "signal") OutputTXT << "        " << systemData.varNames[i] << "mp = k" << systemData.varNames[i] << "2;\n";
 			}
 		}
 		OutputTXT << "\n";
@@ -429,7 +430,7 @@ void WriteCuFile(systemStruct systemData, std::filesystem::path cudaynamicsPath)
 		for (int i = 0; i < systemData.varNames.size(); i++) {
 			if (systemData.varEqs[i] != "signal") {
 				if(systemData.isDerivative[i])OutputTXT << "        " << systemData.varNames[i] << "mp = V(" << systemData.varNames[i] << ")" << " + H * k" << systemData.varNames[i] << "3;\n";
-				else OutputTXT << "        " << systemData.varNames[i] << "mp = k" << systemData.varNames[i] << "3;\n";
+				else if (systemData.varEqs[i] != "signal")OutputTXT << "        " << systemData.varNames[i] << "mp = k" << systemData.varNames[i] << "3;\n";
 			}
 		}
 		OutputTXT << "\n";
@@ -465,7 +466,7 @@ void WriteCuFile(systemStruct systemData, std::filesystem::path cudaynamicsPath)
 					OutputTXT << "        Vnext(" << systemData.varNames[i] << ") = V(" << systemData.varNames[i] << ") + H * (k" << systemData.varNames[i] << "1"
 					<< " + (numb)2.0 * k" << systemData.varNames[i] << "2" << " + (numb)2.0 * k" << systemData.varNames[i] << "3"
 					<< " + k" << systemData.varNames[i] << "4) / (numb)6.0" << ";\n";
-				else
+				else  if (systemData.varEqs[i] != "signal")
 					OutputTXT << "        Vnext(" << systemData.varNames[i] << ") = " << ChangeEqsToKernelSemiExplicit(systemData, systemData.varEqs[i], i);
 			}
 		}
@@ -496,7 +497,7 @@ void WriteCuFile(systemStruct systemData, std::filesystem::path cudaynamicsPath)
 		OutputTXT << "          int i = 0, j = 0, l = 0;\n";
 		for (int i = 0; i < systemData.varEqs.size(); i++) {
 			if (systemData.varEqs[i] == "signal")
-				OutputTXT << "        numb " << systemData.varNamesCode[i] << "mp;\n";
+				OutputTXT << "        numb " << systemData.varNames[i] << "mp;\n";
 		}
 		OutputTXT << "        for (i = 0; i < Number; i++){\n";
 		OutputTXT << "            X1[i] = v[i];\n";
@@ -518,7 +519,7 @@ void WriteCuFile(systemStruct systemData, std::filesystem::path cudaynamicsPath)
 			}
 		}
 		for (int i = 0; i < systemData.varEqs.size(); i++) {
-			if (!systemData.isDerivative[i])
+			if (!systemData.isDerivative[i] && systemData.varEqs[i] != "signal")
 			{
 				OutputTXT << "        " << systemData.varNames[i] << "mp = " << ChangeEqsToKernelDopri(systemData, systemData.varEqs[i])<<";\n";
 
@@ -556,12 +557,12 @@ void WriteCuFile(systemStruct systemData, std::filesystem::path cudaynamicsPath)
 		}
 		for (int i = 0; i < systemData.varNames.size(); i++) {
 			if (systemData.varEqs[i] == "signal") {
-				if (signal == 0) OutputTXT << "        " << systemData.varNames[i] << "mp = P(" << systemData.varNames[i] << "dc) + (fmod((Vnext(t) - P(" << systemData.varNames[i] << "del)) > 0 ? "
+				if (signal == 0) OutputTXT << "        Vnext(" << systemData.varNames[i] << ") = P(" << systemData.varNames[i] << "dc) + (fmod((Vnext(t) - P(" << systemData.varNames[i] << "del)) > 0 ? "
 					<< "(Vnext(t) - P(" << systemData.varNames[i] << "del)) : (P(" << systemData.varNames[i] << "df) / P(" << systemData.varNames[i] << "freq) + P(" << systemData.varNames[i] << "del) - Vnext(t))"
 					<< ", 1 / P(" << systemData.varNames[i] << "freq)) < P(" << systemData.varNames[i] << "df) / P(" << systemData.varNames[i] << "freq) ? P(" << systemData.varNames[i] << "amp) : (numb)0.0);\n";
-				if (signal == 1) OutputTXT << "        " << systemData.varNames[i] << "mp = P(" << systemData.varNames[i] << "dc) + P(" << systemData.varNames[i] << "amp) * sin((numb)2.0 * (numb)3.141592653589793"
+				if (signal == 1) OutputTXT << "        Vnext(" << systemData.varNames[i] << ") = P(" << systemData.varNames[i] << "dc) + P(" << systemData.varNames[i] << "amp) * sin((numb)2.0 * (numb)3.141592653589793"
 					<< " * P(" << systemData.varNames[i] << "freq) * (Vnext(t) - P(" << systemData.varNames[i] << "del)));\n";
-				if (signal == 2) OutputTXT << "        " << systemData.varNames[i] << "mp = P(" << systemData.varNames[i] << "dc) + P(" << systemData.varNames[i] << "amp) * (((numb)4.0 * P(" << systemData.varNames[i] << "freq)"
+				if (signal == 2) OutputTXT << "        Vnext(" << systemData.varNames[i] << ") = P(" << systemData.varNames[i] << "dc) + P(" << systemData.varNames[i] << "amp) * (((numb)4.0 * P(" << systemData.varNames[i] << "freq)"
 					<< " * (Vnext(t) - P(" << systemData.varNames[i] << "del)) - (numb)2.0 * floor(((numb)4.0 * P(" << systemData.varNames[i] << "del) * (Vnext(t) - P(" << systemData.varNames[i] << "del)) + (numb)1.0) / (numb)2.0))"
 					<< " * ((int)floor(((numb)4.0 *P( " << systemData.varNames[i] << "freq) * (Vnext(t) - P(" << systemData.varNames[i] << "del)) + (numb)1.0) / (numb)2.0) % 2 == 0 ? (numb)1.0 : (numb)-1.0));\n";
 
@@ -723,7 +724,7 @@ std::string ChangeEqsToKernelDopri(systemStruct systemData, std::string original
 					
 					for (int var = 0; var < systemData.varNames.size(); var++) {
 						if (tempStr == systemData.varNames[var]) {
-							if (systemData.varEqs[var] == "signal") {
+							if (systemData.varEqs[var] == "signal" || !systemData.isDerivative[var]) {
 								result += tempStr; result += "mp"; varOrParFound = true; break;
 							}
 							else {
@@ -756,7 +757,7 @@ std::string ChangeEqsToKernelDopri(systemStruct systemData, std::string original
 			if (i == original.size() - 1) {
 				for (int var = 0; var < systemData.varNames.size(); var++) {
 					if (tempStr == systemData.varNames[var]) {
-						if (systemData.varEqs[var] == "signal") {
+						if (systemData.varEqs[var] == "signal" || !systemData.isDerivative[var]) {
 							result += tempStr; result += "mp"; varOrParFound = true; break;
 						}
 						else {
