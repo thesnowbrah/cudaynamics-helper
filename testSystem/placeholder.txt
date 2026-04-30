@@ -1,0 +1,4 @@
+x = (mu - x * x - y * y) * x - omega * y + k * (F - x * alpha)
+y = (mu - x * x - y * y) * y + omega * x
+omega = - k * (F - x * alpha) * y
+alpha = eta * (F - x * alpha) * x
