@@ -10,7 +10,7 @@ struct systemStruct {
 	std::vector<std::string> varEqs;
 	std::vector<std::string> parameters;
 	std::vector<bool> isDerivative;
-	bool methodsBool[6];
+	bool methodsBool[6] = {true, true, true, true, true, true};
 
 	systemStruct() 
 	{
