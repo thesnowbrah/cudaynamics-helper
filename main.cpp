@@ -89,7 +89,8 @@ int main(int, char**)
     bool valuesNotCorrect = false;
     bool valuesNotMatching = false;
     bool showHelpWindow = false;
-
+    bool methods[6] = {true, true, true, true, true, true};
+    std::string methodsStr[6] = {"All", "Euler", "Euler-Cromer", "Midpoint", "Runge-Kutta 4", "Dormand Prince" };
     // Main loop
     bool done = false;
     
@@ -223,7 +224,7 @@ int main(int, char**)
                     ImGui::BulletText("Equations must contain only allowed mathematical operations");
                     ImGui::BulletText("Click 'Create' to generate the system");
                     ImGui::Separator();
-                    ImGui::Text("Equations are expected to be written in C++ expressions (without semicolo \";\").\nAllowed functions are as follows: abs, fabs, exp, sqrt,\n   pow, sin, cos, log, min, max, fmin, fmax, fmod.\nTernary conditional statements are also allowed\n   condition ? value_if_true : value_if_false\n   Ex: var1 < par ? par : var1 ");
+                    ImGui::Text("Equations are expected to be written in C++ expressions\n   (without semicolon \";\").\nAllowed functions are as follows: abs, fabs, exp, sqrt,\n   pow, sin, cos, log, min, max, fmin, fmax, fmod.\nTernary conditional statements are also allowed\n   condition ? value_if_true : value_if_false\n   Ex: var1 < par ? par : var1 ");
                 }
                 ImGui::End();
             }
@@ -312,8 +313,25 @@ int main(int, char**)
                 isDerivative.push_back(true);
                 
             }
-
             ImGui::Text(" ");
+            ImGui::Separator();
+            ImGui::PushItemWidth(100.0f);
+            if (ImGui::CollapsingHeader("Chosen methods")) {
+                bool tmpBool[6]; for (int i = 0; i < 6; i++)tmpBool[i] = methods[i];
+                for (int i = 0; i < 6; i++)
+                {
+                    // Рисуем чекбокс рядом с элементом
+                    if (ImGui::Checkbox(("##cb_" + methodsStr[i]).c_str(), &tmpBool[i])) {
+                        if (i == 0 && methods[i] == 0 && tmpBool[i] == 1) for (int j = 1; j < 6; j++) { tmpBool[j] = 1; }
+                    }
+                    ImGui::SameLine();
+                    ImGui::TextUnformatted(methodsStr[i].c_str());
+                    if (!tmpBool[i])tmpBool[0] = false;
+                }
+                for (int i = 0; i < 6; i++)methods[i] = tmpBool[i];
+            }
+            ImGui::Separator();
+
             if (valuesNotCorrect) { ImGui::Text("Input text is incorrect. Check text input boxes for dissalowed symbols and check for repeating variable names."); }
             float buttonWidth = 80.0f;
             ImGui::SetCursorPosX((ImGui::GetWindowWidth() - buttonWidth - ImGui::GetStyle().ItemSpacing.x) * 0.9f);
@@ -334,8 +352,11 @@ int main(int, char**)
                         if (valuesNotCorrect)break;
                     }
 
-                
-
+                int tmpint = 0;
+                for (int i = 0; i < 6; i++) {
+                    if (methods[i] == 1)tmpint++;
+                }
+                if (tmpint == 0)valuesNotCorrect = true;
                 
                 if (!valuesNotCorrect) {
                     valuesNotCorrect = false;
@@ -345,6 +366,9 @@ int main(int, char**)
                     systemData.varNames = varNames;
                     systemData.varEqs = varEqs;
                     systemData.isDerivative = isDerivative;
+                    for (int i = 0; i < 6; i++) {
+                        systemData.methodsBool[i] = methods[i];
+                    }
                     
                     mainDataProcess(&systemData);
 
@@ -363,6 +387,7 @@ int main(int, char**)
                         varEqs.pop_back();
                         isDerivative.pop_back();
                     }
+                    for (int i = 0; i < 6; i++) methods[i] = true;
                     varAmount = 0;
                     systemName = "";
                 }
