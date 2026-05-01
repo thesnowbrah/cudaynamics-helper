@@ -1,0 +1,413 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="imgui\imgui.cpp">
+      <Filter>imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="imgui\imgui_demo.cpp">
+      <Filter>imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="imgui\imgui_draw.cpp">
+      <Filter>imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="imgui\imgui_tables.cpp">
+      <Filter>imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="imgui\imgui_widgets.cpp">
+      <Filter>imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="imgui\backends\imgui_impl_dx11.cpp">
+      <Filter>imgui\backends</Filter>
+    </ClCompile>
+    <ClCompile Include="imgui\backends\imgui_impl_win32.cpp">
+      <Filter>imgui\backends</Filter>
+    </ClCompile>
+    <ClCompile Include="imgui_main.cpp" />
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="implot\implot.cpp">
+      <Filter>implot</Filter>
+    </ClCompile>
+    <ClCompile Include="implot\implot_items.cpp">
+      <Filter>implot</Filter>
+    </ClCompile>
+    <ClCompile Include="imgui_utils.cpp" />
+    <ClCompile Include="main_utils.cpp" />
+    <ClCompile Include="variationSteps.cu" />
+    <ClCompile Include="implot3d\implot3d.cpp">
+      <Filter>implot3d</Filter>
+    </ClCompile>
+    <ClCompile Include="implot3d\implot3d_demo.cpp">
+      <Filter>implot3d</Filter>
+    </ClCompile>
+    <ClCompile Include="implot3d\implot3d_items.cpp">
+      <Filter>implot3d</Filter>
+    </ClCompile>
+    <ClCompile Include="implot3d\implot3d_meshes.cpp">
+      <Filter>implot3d</Filter>
+    </ClCompile>
+    <ClCompile Include="gui\plotWindowMenu.cpp">
+      <Filter>gui</Filter>
+    </ClCompile>
+    <ClCompile Include="gui\img_loading.cpp">
+      <Filter>gui</Filter>
+    </ClCompile>
+    <ClCompile Include="gui\map_img.cpp">
+      <Filter>gui</Filter>
+    </ClCompile>
+    <ClCompile Include="map_utils.cpp" />
+    <ClCompile Include="gui\fullscreen_funcs.cpp">
+      <Filter>gui</Filter>
+    </ClCompile>
+    <ClCompile Include="gui\imgui_ui_funcs.cpp">
+      <Filter>gui</Filter>
+    </ClCompile>
+    <ClCompile Include="file_export.cpp" />
+    <ClCompile Include="kernel_map.cpp" />
+    <ClCompile Include="indices_map.cpp" />
+    <ClCompile Include="index2port.cpp" />
+    <ClCompile Include="anfunc2indices.cpp" />
+    <ClCompile Include="anfunc_names.cpp" />
+    <ClCompile Include="splitString.cpp" />
+    <ClCompile Include="fonts.cpp" />
+    <ClCompile Include="gui\mainWindowMenu.cpp">
+      <Filter>gui</Filter>
+    </ClCompile>
+    <ClCompile Include="gui\styles.cpp">
+      <Filter>gui</Filter>
+    </ClCompile>
+    <ClCompile Include="json\json.cpp">
+      <Filter>json</Filter>
+    </ClCompile>
+    <ClCompile Include="jsonRW.cpp" />
+    <ClCompile Include="standalone\standalone_utils.cpp" />
+    <ClCompile Include="computations.cpp" />
+    <ClCompile Include="configIO.cpp" />
+    <ClCompile Include="rangingTypeFromString.cpp" />
+    <ClCompile Include="gui\commonItemDialogs.cpp" />
+    <ClCompile Include="gui\hwnd.cpp" />
+    <ClCompile Include="gui\ui_strings.cpp" />
+    <ClCompile Include="gui\applicationSettings_struct.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="imgui">
+      <UniqueIdentifier>{3e472e74-c0be-4f38-8af0-f134326f6beb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="imgui\backends">
+      <UniqueIdentifier>{e2aadb0d-c1cb-4f98-8856-23f451267ad2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="systems">
+      <UniqueIdentifier>{9315fa8f-a754-48c4-b121-979c4d96bcb5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="implot">
+      <UniqueIdentifier>{3e4da3fd-8489-4389-9886-e10bac652991}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="analysis">
+      <UniqueIdentifier>{de16d9d3-e2a2-45ef-8e41-d0ff21a3645f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="implot3d">
+      <UniqueIdentifier>{2e2d2bfc-a3ca-4599-adcc-177cb5b5f913}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="gui">
+      <UniqueIdentifier>{6cdca27c-51e4-4f85-8673-eed16b31547e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="analysis\lle">
+      <UniqueIdentifier>{0e268a75-6ae7-4748-9c81-1a1c8fd3291b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="analysis\max">
+      <UniqueIdentifier>{1d501396-4ff0-4147-b8df-9df70f96ca8a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="benchmarking">
+      <UniqueIdentifier>{77057837-ce30-4f25-a386-eaf1094d3b91}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="analysis\period">
+      <UniqueIdentifier>{7225bc9b-34c4-4ffd-a03f-a310f75ed79b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="analysis\phaseVolume">
+      <UniqueIdentifier>{af5f75cf-386a-483e-8f1c-342ef4f060e0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="json">
+      <UniqueIdentifier>{9532fce9-e3ab-44d9-8809-6ebbc306a8de}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="imgui\imconfig.h">
+      <Filter>imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="imgui\imgui.h">
+      <Filter>imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="imgui\imgui_internal.h">
+      <Filter>imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="imgui\imstb_rectpack.h">
+      <Filter>imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="imgui\imstb_textedit.h">
+      <Filter>imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="imgui\imstb_truetype.h">
+      <Filter>imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="imgui\backends\imgui_impl_dx11.h">
+      <Filter>imgui\backends</Filter>
+    </ClInclude>
+    <ClInclude Include="imgui\backends\imgui_impl_win32.h">
+      <Filter>imgui\backends</Filter>
+    </ClInclude>
+    <ClInclude Include="main.h" />
+    <ClInclude Include="implot\implot.h">
+      <Filter>implot</Filter>
+    </ClInclude>
+    <ClInclude Include="implot\implot_internal.h">
+      <Filter>implot</Filter>
+    </ClInclude>
+    <ClInclude Include="objects.h" />
+    <ClInclude Include="imgui_utils.h" />
+    <ClInclude Include="cuda_macros.h" />
+    <ClInclude Include="resource.h" />
+    <ClInclude Include="quaternion.h" />
+    <ClInclude Include="plotWindow.h" />
+    <ClInclude Include="analysis.h" />
+    <ClInclude Include="main_utils.h" />
+    <ClInclude Include="kernel_struct.h" />
+    <ClInclude Include="marshal_struct.h" />
+    <ClInclude Include="computation_struct.h" />
+    <ClInclude Include="attribute_struct.h" />
+    <ClInclude Include="mapData_struct.h" />
+    <ClInclude Include="variationSteps.h" />
+    <ClInclude Include="heatmapSizing_struct.h" />
+    <ClInclude Include="implot3d\implot3d.h">
+      <Filter>implot3d</Filter>
+    </ClInclude>
+    <ClInclude Include="implot3d\implot3d_internal.h">
+      <Filter>implot3d</Filter>
+    </ClInclude>
+    <ClInclude Include="gui\plotWindowMenu.h">
+      <Filter>gui</Filter>
+    </ClInclude>
+    <ClInclude Include="gui\img_loading.h">
+      <Filter>gui</Filter>
+    </ClInclude>
+    <ClInclude Include="gui\stb_image.h">
+      <Filter>gui</Filter>
+    </ClInclude>
+    <ClInclude Include="gui\d3dx11tex.h">
+      <Filter>gui</Filter>
+    </ClInclude>
+    <ClInclude Include="gui\map_img.h">
+      <Filter>gui</Filter>
+    </ClInclude>
+    <ClInclude Include="imgui_main.hpp" />
+    <ClInclude Include="heatmapProperties.hpp" />
+    <ClInclude Include="map_utils.hpp" />
+    <ClInclude Include="colorLUT_struct.h" />
+    <ClInclude Include="iconfont.h" />
+    <ClInclude Include="gui\fullscreen_funcs.h">
+      <Filter>gui</Filter>
+    </ClInclude>
+    <ClInclude Include="analysis\lle\lle.h">
+      <Filter>analysis\lle</Filter>
+    </ClInclude>
+    <ClInclude Include="analysis\max\max.h">
+      <Filter>analysis\max</Filter>
+    </ClInclude>
+    <ClInclude Include="kernels_common.h" />
+    <ClInclude Include="gui\imgui_ui_funcs.h">
+      <Filter>gui</Filter>
+    </ClInclude>
+    <ClInclude Include="gui\window_configs.h">
+      <Filter>gui</Filter>
+    </ClInclude>
+    <ClInclude Include="file_export.h" />
+    <ClInclude Include="analysis\period\period.h">
+      <Filter>analysis\period</Filter>
+    </ClInclude>
+    <ClInclude Include="constraint.h">
+      <Filter>gui</Filter>
+    </ClInclude>
+    <ClInclude Include="analysesSettings_struct.h" />
+    <ClInclude Include="analysisHeaders.h" />
+    <ClInclude Include="numb.h" />
+    <ClInclude Include="analysisSettingsHeaders.h" />
+    <ClInclude Include="analysis\max\max_settings.h">
+      <Filter>analysis\max</Filter>
+    </ClInclude>
+    <ClInclude Include="analysis\lle\lle_settings.h">
+      <Filter>analysis\lle</Filter>
+    </ClInclude>
+    <ClInclude Include="analysis\period\period_settings.h">
+      <Filter>analysis\period</Filter>
+    </ClInclude>
+    <ClInclude Include="port.h" />
+    <ClInclude Include="systemsHeaders.h" />
+    <ClInclude Include="abstractSettings_struct.h" />
+    <ClInclude Include="index.h" />
+    <ClInclude Include="anfuncs.h" />
+    <ClInclude Include="index2port.h" />
+    <ClInclude Include="indices_map.h" />
+    <ClInclude Include="kernel_map.h" />
+    <ClInclude Include="anfunc2indices.h" />
+    <ClInclude Include="anfunc_names.h" />
+    <ClInclude Include="splitString.h" />
+    <ClInclude Include="analysisLobby.cuh" />
+    <ClInclude Include="gpu_variation.cuh" />
+    <ClInclude Include="fonts.h" />
+    <ClInclude Include="gui\mainWindowMenu.h">
+      <Filter>gui</Filter>
+    </ClInclude>
+    <ClInclude Include="gui\customStylesEnum.h">
+      <Filter>gui</Filter>
+    </ClInclude>
+    <ClInclude Include="gui\styles.h">
+      <Filter>gui</Filter>
+    </ClInclude>
+    <ClInclude Include="fontSettings_struct.h" />
+    <ClInclude Include="gui\colormapMarkerSettings_struct.h">
+      <Filter>gui</Filter>
+    </ClInclude>
+    <ClInclude Include="analysis\phaseVolume\phaseVolume.h">
+      <Filter>analysis\phaseVolume</Filter>
+    </ClInclude>
+    <ClInclude Include="analysis\phaseVolume\phaseVolume_settings.h">
+      <Filter>analysis\phaseVolume</Filter>
+    </ClInclude>
+    <ClInclude Include="decaySettings_struct.h" />
+    <ClInclude Include="gui\applicationSettings_struct.h">
+      <Filter>gui</Filter>
+    </ClInclude>
+    <ClInclude Include="json\json.h">
+      <Filter>json</Filter>
+    </ClInclude>
+    <ClInclude Include="plots\decay.h" />
+    <ClInclude Include="plots\trs.h" />
+    <ClInclude Include="plots\orbit.h" />
+    <ClInclude Include="jsonRW.h" />
+    <ClInclude Include="standalone\standalone_utils.h" />
+    <ClInclude Include="computations.h" />
+    <ClInclude Include="configIO.h" />
+    <ClInclude Include="rangingTypeFromString.h" />
+    <ClInclude Include="gui\commonItemDialogs.h" />
+    <ClInclude Include="gui\hwnd.h" />
+    <ClInclude Include="gui\ui_strings.h" />
+    <ClInclude Include="perthread_struct.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <CudaCompile Include="main.cu" />
+    <CudaCompile Include="systems\test_1\test_1.cu">
+      <Filter>systems</Filter>
+    </CudaCompile>
+    <CudaCompile Include="systems\adaptive_af\adaptive_af.cu">
+      <Filter>systems</Filter>
+    </CudaCompile>
+    <CudaCompile Include="systems\rossler_test\rossler_test.cu">
+      <Filter>systems</Filter>
+    </CudaCompile>
+    <CudaCompile Include="systems\halvorsen\halvorsen.cu">
+      <Filter>systems</Filter>
+    </CudaCompile>
+    <CudaCompile Include="systems\fourwing\fourwing.cu">
+      <Filter>systems</Filter>
+    </CudaCompile>
+    <CudaCompile Include="systems\langford\langford.cu">
+      <Filter>systems</Filter>
+    </CudaCompile>
+    <CudaCompile Include="systems\rossler\rossler.cu">
+      <Filter>systems</Filter>
+    </CudaCompile>
+    <CudaCompile Include="systems\three_scroll\three_scroll.cu">
+      <Filter>systems</Filter>
+    </CudaCompile>
+    <CudaCompile Include="systems\wilson\wilson.cu">
+      <Filter>systems</Filter>
+    </CudaCompile>
+    <CudaCompile Include="systems\thomas\thomas.cu">
+      <Filter>systems</Filter>
+    </CudaCompile>
+    <CudaCompile Include="analysis\lle\lle.cu">
+      <Filter>analysis\lle</Filter>
+    </CudaCompile>
+    <CudaCompile Include="analysis\max\max.cu">
+      <Filter>analysis\max</Filter>
+    </CudaCompile>
+    <CudaCompile Include="systems\lorenz\lorenz.cu">
+      <Filter>systems</Filter>
+    </CudaCompile>
+    <CudaCompile Include="systems\lorenzVar\lorenzVar.cu">
+      <Filter>systems</Filter>
+    </CudaCompile>
+    <CudaCompile Include="systems\sprott14\sprott14.cu">
+      <Filter>systems</Filter>
+    </CudaCompile>
+    <CudaCompile Include="systems\rabinovich_fabrikant\rabinovich_fabrikant.cu">
+      <Filter>systems</Filter>
+    </CudaCompile>
+    <CudaCompile Include="systems\bolshakov\bolshakov.cu">
+      <Filter>systems</Filter>
+    </CudaCompile>
+    <CudaCompile Include="systems\izhikevich\izhikevich.cu">
+      <Filter>systems</Filter>
+    </CudaCompile>
+    <CudaCompile Include="systems\hindmarsh_rose\hindmarsh_rose.cu">
+      <Filter>systems</Filter>
+    </CudaCompile>
+    <CudaCompile Include="systems\fitzhugh_nagumo\fitzhugh_nagumo.cu">
+      <Filter>systems</Filter>
+    </CudaCompile>
+    <CudaCompile Include="systems\mishchenko\mishchenko.cu">
+      <Filter>systems</Filter>
+    </CudaCompile>
+    <CudaCompile Include="analysis\period\period.cu">
+      <Filter>analysis\period</Filter>
+    </CudaCompile>
+    <CudaCompile Include="analysisLobby.cu" />
+    <CudaCompile Include="systems\mixed\mixed.cu">
+      <Filter>systems</Filter>
+    </CudaCompile>
+    <CudaCompile Include="systems\ostrovskii\ostrovskii.cu">
+      <Filter>systems</Filter>
+    </CudaCompile>
+    <CudaCompile Include="gpu_variation.cu" />
+    <CudaCompile Include="systems\hodgkin_huxley\hodgkin_huxley.cu">
+      <Filter>systems</Filter>
+    </CudaCompile>
+    <CudaCompile Include="systems\sang26\sang26.cu">
+      <Filter>systems</Filter>
+    </CudaCompile>
+    <CudaCompile Include="systems\pala_machaczek\pala_machaczek.cu">
+      <Filter>systems</Filter>
+    </CudaCompile>
+    <CudaCompile Include="systems\sang25\sang25.cu">
+      <Filter>systems</Filter>
+    </CudaCompile>
+    <CudaCompile Include="analysis\phaseVolume\phaseVolume.cu">
+      <Filter>analysis\phaseVolume</Filter>
+    </CudaCompile>
+    <CudaCompile Include="systems\jj_mcrls\jj_mcrls.cu">
+      <Filter>systems</Filter>
+    </CudaCompile>
+    <CudaCompile Include="systems\jj_rcls\jj_rcls.cu">
+      <Filter>systems</Filter>
+    </CudaCompile>
+    <CudaCompile Include="systems\chen_lee\chen_lee.cu">
+      <Filter>systems</Filter>
+    </CudaCompile>
+    <CudaCompile Include="systems\dadras_momeni\dadras_momeni.cu">
+      <Filter>systems</Filter>
+    </CudaCompile>
+    <CudaCompile Include="systems\lorenz84\lorenz84.cu">
+      <Filter>systems</Filter>
+    </CudaCompile>
+    <CudaCompile Include="systems\ullah\ullah.cu">
+      <Filter>systems</Filter>
+    </CudaCompile>
+    <CudaCompile Include="systems\resonate_and_fire\resonate_and_fire.cu" />
+    <CudaCompile Include="systems\khanov\khanov.cu" />
+    <CudaCompile Include="systems\de_pitta\de_pitta.cu" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="CUDAynamics.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="icon.ico" />
+  </ItemGroup>
+</Project>

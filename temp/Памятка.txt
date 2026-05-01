@@ -1,0 +1,7 @@
+systemheaders.h
+
+CUDAynamics.vcxproj.filters
+<CudaCompile Include="systems\name\name.cu">
+<Filter>systems</Filter>
+</CudaCompile>
+
