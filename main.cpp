@@ -43,11 +43,9 @@ std::filesystem::path getExecutableDirectory();
 int main(int, char**)
 {
     // Create application window
-    //ImGui_ImplWin32_EnableDpiAwareness();
-    //WNDCLASSEXW wc = { sizeof(wc), CS_CLASSDC, WndProc, 0L, 0L, GetModuleHandle(nullptr) };
     WNDCLASSEXW wc = { sizeof(wc), CS_CLASSDC, WndProc, 0L, 0L, GetModuleHandle(nullptr), nullptr, nullptr, nullptr, nullptr, L"CUDAynamicsEditor", nullptr };
     ::RegisterClassExW(&wc);
-    HWND hwnd = ::CreateWindowW(wc.lpszClassName, L"CUDAynamics System Editor", WS_OVERLAPPEDWINDOW, 100, 100, 800, 500, nullptr, nullptr, wc.hInstance, nullptr);
+    HWND hwnd = ::CreateWindowW(wc.lpszClassName, L"CUDAynamics System Editor", WS_OVERLAPPEDWINDOW, 100, 100, 0, 0, nullptr, nullptr, wc.hInstance, nullptr);
 
     // Initialize Direct3D
     if (!CreateDeviceD3D(hwnd))
@@ -58,7 +56,7 @@ int main(int, char**)
     }
 
     // Show the window
-    ::ShowWindow(hwnd, SW_SHOWDEFAULT);
+    //::ShowWindow(hwnd, SW_SHOWDEFAULT);
     ::UpdateWindow(hwnd);
 
     // Setup Dear ImGui context
@@ -66,9 +64,23 @@ int main(int, char**)
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO(); (void)io;
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;         // Enable Docking
+    io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;       // Enable Multi-Viewport / Platform Windows
+    io.ConfigViewportsNoAutoMerge = true;
+    io.ConfigViewportsNoTaskBarIcon = true; // TODO: Adapt to having it 'false' and creating a taskbar icon per every window for better traversing
+
 
     // Setup Dear ImGui style
     ImGui::StyleColorsDark();     // Or ImGui::StyleColorsClassic()
+
+    // When viewports are enabled we tweak WindowRounding/WindowBg so platform windows can look identical to regular ones
+    ImGuiStyle& style = ImGui::GetStyle();
+    if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+    {
+        style.WindowRounding = 0.0f;
+        style.Colors[ImGuiCol_WindowBg].w = 1.0f;
+    }
 
     // Setup Platform/Renderer backends
     ImGui_ImplWin32_Init(hwnd);
@@ -89,19 +101,19 @@ int main(int, char**)
     bool valuesNotCorrect = false;
     bool valuesNotMatching = false;
     bool showHelpWindow = false;
-    bool methods[6] = {true, true, true, true, true, true};
-    std::string methodsStr[6] = {"All", "Euler", "Euler-Cromer", "Midpoint", "Runge-Kutta 4", "Dormand Prince" };
+    bool methods[6] = { true, true, true, true, true, true };
+    std::string methodsStr[6] = { "All", "Euler", "Euler-Cromer", "Midpoint", "Runge-Kutta 4", "Dormand Prince" };
+
     // Main loop
     bool done = false;
-    
+
     //fonts
     ImFont* font_default = io.Fonts->AddFontDefault();
     ImFont* font_title = io.Fonts->AddFontFromFileTTF("C:\\Windows\\Fonts\\Arial.ttf", 40.0f);
     ImFont* font_large = io.Fonts->AddFontFromFileTTF("C:\\Windows\\Fonts\\Arial.ttf", 32.0f);
-
+    
     while (!done)
     {
-        // Poll and handle messages (inputs, window resize, etc.)
         MSG msg;
         while (::PeekMessage(&msg, nullptr, 0U, 0U, PM_REMOVE))
         {
@@ -118,24 +130,10 @@ int main(int, char**)
         ImGui_ImplWin32_NewFrame();
         ImGui::NewFrame();
 
-        // ============================================
-        // UI Elements - No separate window, just floating elements
-        // ============================================
-
-        // Get window size to center the UI
-        ImVec2 windowSize = ImGui::GetIO().DisplaySize;
-
-        // Set next window position to center of screen
-        ImGui::SetNextWindowPos(ImVec2(0, 0));
-        ImGui::SetNextWindowSize(ImGui::GetIO().DisplaySize);
-        ImGui::Begin("Fullscreen", nullptr,
+        ImGui::SetNextWindowSize(ImVec2(600, 400), ImGuiCond_FirstUseEver);
+        ImGui::Begin("MainScreen", nullptr,
             ImGuiWindowFlags_NoTitleBar |
-            ImGuiWindowFlags_NoResize |
-            ImGuiWindowFlags_NoMove |
-            ImGuiWindowFlags_NoScrollbar |
             ImGuiWindowFlags_NoSavedSettings);
-
-
 
         if (!createButton_clicked) {
             ImGui::PushFont(font_title);
@@ -147,7 +145,6 @@ int main(int, char**)
             // Center the buttons horizontally
             float buttonWidth = 400.0f;
             float windowWidth = ImGui::GetWindowWidth();
-
 
             ImGui::PushFont(font_large);
             ImGui::SetCursorPosX((windowWidth - buttonWidth - ImGui::GetStyle().ItemSpacing.x) * 0.5f);
@@ -171,11 +168,10 @@ int main(int, char**)
             }
             ImGui::PopFont();
 
-
             if (button2_clicked)
             {
                 ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.0f, 1.0f), "Button 2 was clicked!");
-                button2_clicked = false; 
+                button2_clicked = false;
             }
 
             if (exitButton_clicked)
@@ -205,7 +201,7 @@ int main(int, char**)
             ImGui::SetCursorPosX((ImGui::GetWindowWidth()) * 0.92f);
 
             if (ImGui::Button("?", ImVec2(30, 0))) {
-                showHelpWindow = !showHelpWindow; 
+                showHelpWindow = !showHelpWindow;
             }
             if (showHelpWindow)
             {
@@ -237,7 +233,7 @@ int main(int, char**)
             ImGui::Text("System Name: "); ImGui::SameLine();
             ImGui::InputText("##SystemNameTextID", &systemName); ImGui::SameLine(); ImGui::Text("System");
             ImGui::Text(" ");
-            
+
             for (int i = 0; i < varAmount; i++) {
                 bool isSignal;
                 if (isDerivative[i] == true) {
@@ -248,12 +244,12 @@ int main(int, char**)
                     std::string labelText = "Eq-n of Variable " + std::to_string(i + 1) + ":";
                     ImGui::Text("%s", labelText.c_str());
                 }
-                
+
                 ImGui::SameLine();
 
                 std::string inputID = "##Variable" + std::to_string(i);
 
-                if (isDerivative[i] == true) ImGui::PushItemWidth((ImGui::GetWindowWidth() - ImGui::CalcTextSize("Diff. Eq-n of Variable ").x)* 0.2f);
+                if (isDerivative[i] == true) ImGui::PushItemWidth((ImGui::GetWindowWidth() - ImGui::CalcTextSize("Diff. Eq-n of Variable ").x) * 0.2f);
                 else ImGui::PushItemWidth((ImGui::GetWindowWidth() - ImGui::CalcTextSize("Eq-n of Variable ").x) * 0.2f);
                 ImGui::InputText(inputID.c_str(), &varNames[i]);
                 ImGui::PopItemWidth();
@@ -268,7 +264,7 @@ int main(int, char**)
                 else {
                     isSignal = false;
                     inputID = "##Equation" + std::to_string(i);
-                    if (isDerivative[i] == true) ImGui::PushItemWidth((ImGui::GetWindowWidth() - ImGui::CalcTextSize("Diff. Eq-n of Variable ").x)* 0.55f);
+                    if (isDerivative[i] == true) ImGui::PushItemWidth((ImGui::GetWindowWidth() - ImGui::CalcTextSize("Diff. Eq-n of Variable ").x) * 0.55f);
                     else ImGui::PushItemWidth((ImGui::GetWindowWidth() - ImGui::CalcTextSize("Eq-n of Variable ").x) * 0.55f);
                     ImGui::InputText(inputID.c_str(), &varEqs[i]);
                     ImGui::PopItemWidth();
@@ -284,9 +280,6 @@ int main(int, char**)
                     i--;
                 }
                 ImGui::PopID();
-
-                
-                
 
                 ImGui::Text("       ");
                 ImGui::SameLine();
@@ -304,14 +297,12 @@ int main(int, char**)
                 isDerivative[i] = tmpbool;
 
                 ImGui::Text(" ");
-
             }
             if (ImGui::Button("+", ImVec2(60, 0))) {
                 varAmount++;
                 varNames.push_back("");
                 varEqs.push_back("");
                 isDerivative.push_back(true);
-                
             }
             ImGui::Text(" ");
             ImGui::Separator();
@@ -339,10 +330,10 @@ int main(int, char**)
                 valuesNotCorrect = false;
                 if (varAmount < 1)valuesNotCorrect = true;
                 if (!valuesNotCorrect) valuesNotCorrect = checkNameCorrectness(systemName);
-                if(!valuesNotCorrect)
+                if (!valuesNotCorrect)
                     for (int count = 0; count < varAmount; count++) {
-                        for (int j = count+1; j < varAmount; j++) {
-                            if(j<varAmount)
+                        for (int j = count + 1; j < varAmount; j++) {
+                            if (j < varAmount)
                                 if (varNames[j] == varNames[count]) { valuesNotCorrect = true; break; }
                         }
                         if (valuesNotCorrect)break;
@@ -357,7 +348,7 @@ int main(int, char**)
                     if (methods[i] == 1)tmpint++;
                 }
                 if (tmpint == 0)valuesNotCorrect = true;
-                
+
                 if (!valuesNotCorrect) {
                     valuesNotCorrect = false;
 
@@ -369,11 +360,8 @@ int main(int, char**)
                     for (int i = 0; i < 6; i++) {
                         systemData.methodsBool[i] = methods[i];
                     }
-                    
+
                     mainDataProcess(&systemData);
-
-                    
-
 
                     std::filesystem::path exeDir = getExecutableDirectory();
                     std::filesystem::path projectRoot = exeDir.parent_path().parent_path().parent_path();
@@ -394,16 +382,26 @@ int main(int, char**)
             }
         }
 
-       
-
         ImGui::End();
 
         // Rendering
         ImGui::Render();
+
+        // Clear the main viewport
         const float clear_color_with_alpha[4] = { 0.45f, 0.55f, 0.60f, 1.00f };
         g_pd3dDeviceContext->OMSetRenderTargets(1, &g_mainRenderTargetView, nullptr);
         g_pd3dDeviceContext->ClearRenderTargetView(g_mainRenderTargetView, clear_color_with_alpha);
+
+        // Render ImGui draw data
         ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+
+        // Update and Render additional Platform Windows
+        // (Platform windows may not have been created for all ImGui windows yet, so we need to call this)
+        if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+        {
+            ImGui::UpdatePlatformWindows();
+            ImGui::RenderPlatformWindowsDefault();
+        }
 
         g_pSwapChain->Present(1, 0); // Present with vsync
     }
@@ -431,8 +429,7 @@ bool checkNameCorrectness(std::string line) {
 
     for (int i = 0; i < line.size(); i++) {
         if (line[i] != 32) notBlank = true;
-        if (line[i] < 32 || (line[i] > 32 && line[i] < 45 )|| (line[i] > 45 && line[i] < 48) || (line[i] > 57 && line[i] < 65) || (line[i] > 90 && line[i] < 97) || line[i] > 122) return 1;
-        
+        if (line[i] < 32 || (line[i] > 32 && line[i] < 45) || (line[i] > 45 && line[i] < 48) || (line[i] > 57 && line[i] < 65) || (line[i] > 90 && line[i] < 97) || line[i] > 122) return 1;
     }
     if (!notBlank)return 1;
     return 0;
@@ -441,7 +438,7 @@ bool checkNameCorrectness(std::string line) {
 bool checkEqsCorrectness(std::string line) {
     if (line.size() == 0) return 1;
     for (int i = 0; i < line.size(); i++) {
-        if (line[i]<32 || (line[i] >32 && line[i] < 37) || line[i] == 39 || (line[i]>57 && line[i] < 60) || line[i] == 64 || (line[i]>90 && line[i] < 97) || line[i] > 122) return 1;
+        if (line[i] < 32 || (line[i] > 32 && line[i] < 37) || line[i] == 39 || (line[i] > 57 && line[i] < 60) || line[i] == 64 || (line[i] > 90 && line[i] < 97) || line[i] > 122) return 1;
     }
     return 0;
 }
@@ -450,7 +447,7 @@ void MakeTextFile(std::string systemName, std::vector<std::string> varNames, std
     std::ofstream outputFile("Output.txt");
     outputFile << systemName << '\n';
     for (int count = 0; count < varAmount; count++) {
-        outputFile << varNames[count] << " = " << varEqs[count]<<'\n';
+        outputFile << varNames[count] << " = " << varEqs[count] << '\n';
     }
     outputFile.close();
 }
