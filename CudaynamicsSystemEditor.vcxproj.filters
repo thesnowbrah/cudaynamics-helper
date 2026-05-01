@@ -65,5 +65,8 @@
     <ClInclude Include="CudaynamicsDirectory.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="imgui\imgui.h">
+      <Filter>imgui</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
