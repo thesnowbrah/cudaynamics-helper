@@ -141,8 +141,8 @@ void WriteTXT(systemStruct systemData, std::filesystem::path cudaynamicsPath) {
 	for (int i = 1; i < 6; i++) {
 		if (systemData.methodsBool[i] == true) {
 			if (!firstMethodFound) { firstMethodFound = true; OutputTXT << "1"; }
-			else { OutputTXT << "0"; }
-			OutputTXT << methodStrs[i - 1] << " ";
+			else { OutputTXT << " 0"; }
+			OutputTXT << methodStrs[i - 1];
 		}
 	}
 	OutputTXT << "\n";
@@ -202,7 +202,15 @@ void WriteCuFile(systemStruct systemData, std::filesystem::path cudaynamicsPath)
 	if (hasSignal)OutputTXT << "enum waveforms { square, sine, triangle };\n";
 
 	OutputTXT << "enum methods { ";
-	OutputTXT << "ExplicitEuler,  SemiExplicitEuler, ExplicitMidpoint, ExplicitRungeKutta4, ExplicitDormandPrince8};\n}\n\n"; // NO VSCD
+	bool first = true;
+	std::string methodStrs[5] = { "ExplicitEuler", "SemiExplicitEuler", "ExplicitMidpoint", "ExplicitRungeKutta4", "ExplicitDormandPrince8" };// NO VSCD
+	for (int i = 1; i < 6; i++) {
+		if (systemData.methodsBool[i] == true) {
+			if (first) { OutputTXT << methodStrs[i - 1]; first = false; }
+			else { OutputTXT << ", " << methodStrs[i - 1]; }
+		}
+	}
+	OutputTXT << "};\n}\n\n";
 
 	OutputTXT << "__global__ void gpu_wrapper_(name)(Computation* data, uint64_t variation)\n"
 		<< "{\n    kernelProgram_(name)(data, (blockIdx.x* blockDim.x) + threadIdx.x);\n}\n";
