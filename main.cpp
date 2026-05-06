@@ -14,7 +14,9 @@
 #include <list>
 #include <string>
 #include <fstream>
+#include <filesystem>
 
+#include "Delete.h"
 #include "ParseFromInput.h"
 #include "WriteToFiles.h"
 #include "CudaynamicsDirectory.h"
@@ -88,7 +90,7 @@ int main(int, char**)
 
     // Main window variables
     bool createButton_clicked = false;
-    bool button2_clicked = false;
+    bool deleteButton_clicked = false;
     bool exitButton_clicked = false;
 
     // Create window variables
@@ -103,6 +105,12 @@ int main(int, char**)
     bool showHelpWindow = false;
     bool methods[6] = { true, true, true, true, true, true };
     std::string methodsStr[6] = { "All", "Euler", "Euler-Cromer", "Midpoint", "Runge-Kutta 4", "Dormand Prince" };
+
+    //Delete window variables
+    int current_item = -1;
+    bool deleteRefresh = true;
+    std::vector<std::string> systemNames;
+    std::vector<std::string> systemNamesCode;
 
     // Main loop
     bool done = false;
@@ -125,7 +133,6 @@ int main(int, char**)
         if (done)
             break;
 
-        // Start the Dear ImGui frame
         ImGui_ImplDX11_NewFrame();
         ImGui_ImplWin32_NewFrame();
         ImGui::NewFrame();
@@ -135,14 +142,13 @@ int main(int, char**)
             ImGuiWindowFlags_NoTitleBar |
             ImGuiWindowFlags_NoSavedSettings);
 
-        if (!createButton_clicked) {
+        if (!createButton_clicked && !deleteButton_clicked) {
             ImGui::PushFont(font_title);
             ImGui::SetCursorPosX((ImGui::GetWindowWidth() - ImGui::CalcTextSize("CUDAynamics System Editor").x) * 0.5f);
             ImGui::Text("CUDAynamics System Editor");
             ImGui::PopFont();
             ImGui::Separator();
 
-            // Center the buttons horizontally
             float buttonWidth = 400.0f;
             float windowWidth = ImGui::GetWindowWidth();
 
@@ -157,7 +163,8 @@ int main(int, char**)
             ImGui::SetCursorPosX((windowWidth - buttonWidth - ImGui::GetStyle().ItemSpacing.x) * 0.5f);
             if (ImGui::Button("Delete System", ImVec2(buttonWidth, 0)))
             {
-                button2_clicked = true;
+                deleteButton_clicked = true;
+                deleteRefresh = true;
             }
             ImGui::Text(" ");
             ImGui::Text(" ");
@@ -167,12 +174,6 @@ int main(int, char**)
                 exitButton_clicked = true;
             }
             ImGui::PopFont();
-
-            if (button2_clicked)
-            {
-                ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.0f, 1.0f), "Button 2 was clicked!");
-                button2_clicked = false;
-            }
 
             if (exitButton_clicked)
             {
@@ -311,7 +312,6 @@ int main(int, char**)
                 bool tmpBool[6]; for (int i = 0; i < 6; i++)tmpBool[i] = methods[i];
                 for (int i = 0; i < 6; i++)
                 {
-                    // Рисуем чекбокс рядом с элементом
                     if (ImGui::Checkbox(("##cb_" + methodsStr[i]).c_str(), &tmpBool[i])) {
                         if (i == 0 && methods[i] == 0 && tmpBool[i] == 1) for (int j = 1; j < 6; j++) { tmpBool[j] = 1; }
                     }
@@ -376,10 +376,90 @@ int main(int, char**)
                         isDerivative.pop_back();
                     }
                     for (int i = 0; i < 6; i++) methods[i] = true;
+                    
                     varAmount = 0;
                     systemName = "";
+                    deleteRefresh = true;
                 }
             }
+        }
+        else if (deleteButton_clicked) {
+            if (ImGui::Button("Back to menu")) {
+                deleteButton_clicked = false;
+                current_item = -1;
+            }
+            ImGui::SameLine();
+            ImGui::PushFont(font_large);
+            ImGui::SetCursorPosX((ImGui::GetWindowWidth() - ImGui::CalcTextSize("Delete system").x) * 0.5f);
+            ImGui::Text("Delete system");
+            ImGui::PopFont();
+            ImGui::Separator();
+            if (deleteRefresh) {
+                deleteRefresh = false;
+                std::filesystem::path exeDir = getExecutableDirectory();
+                std::filesystem::path projectRoot = exeDir.parent_path().parent_path().parent_path();
+                std::filesystem::path cudaynamicsPath = projectRoot / ReturnDirectory();
+                DeletePrep(cudaynamicsPath, &systemNames, &systemNamesCode);
+            }
+
+
+                if (ImGui::BeginCombo("##SelectSystemCombo",
+                    current_item != -1 ? systemNames[current_item].c_str() : "Choose a system")) {
+
+                    for (int i = 0; i < systemNames.size(); i++) {
+                        bool is_selected = (current_item == i);
+
+                        if (ImGui::Selectable(systemNames[i].c_str(), is_selected)) {
+                            current_item = i;
+                        }
+
+                        if (is_selected) {
+                            ImGui::SetItemDefaultFocus();
+                        }
+                    }
+
+                    ImGui::EndCombo();
+                }
+                ImGui::Text(" ");
+                if (ImGui::Button("DELETE##Select SystemButton")) {
+                    if (current_item != -1) {
+                        std::filesystem::path exeDir = getExecutableDirectory();
+                        std::filesystem::path projectRoot = exeDir.parent_path().parent_path().parent_path();
+                        std::filesystem::path cudaynamicsPath = projectRoot / ReturnDirectory();
+                        std::filesystem::path systemPath = cudaynamicsPath / "systems" / systemNamesCode[current_item];
+                        DeleteSystem(cudaynamicsPath, systemPath, systemNamesCode[current_item]);
+
+                        ImGui::OpenPopup("Selection Confirmed");
+                    }
+                    else {
+                        ImGui::OpenPopup("No Selection");
+                    }
+                }
+
+                if (ImGui::BeginPopupModal("Selection Confirmed", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
+                    ImGui::Text("Deleted system: %s", systemNames[current_item].c_str());
+                    
+                    
+                    if (ImGui::Button("OK")) {
+                        ImGui::CloseCurrentPopup();
+                        systemNames.erase(systemNames.begin() + current_item);
+                        systemNamesCode.erase(systemNamesCode.begin() + current_item);
+                        current_item = -1;
+                    }
+                    ImGui::EndPopup();
+                }
+
+                if (ImGui::BeginPopupModal("No Selection", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
+                    ImGui::Text("Please select a system first!");
+                    if (ImGui::Button("OK")) {
+                        ImGui::CloseCurrentPopup();
+                    }
+                    ImGui::EndPopup();
+                }
+            
+
+
+        
         }
 
         ImGui::End();

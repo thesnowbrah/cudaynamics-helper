@@ -51,6 +51,9 @@
     <ClCompile Include="imgui\backends\imgui_impl_dx11.cpp">
       <Filter>imgui</Filter>
     </ClCompile>
+    <ClCompile Include="Delete.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="SystemStruct.h">
@@ -67,6 +70,9 @@
     </ClInclude>
     <ClInclude Include="imgui\imgui.h">
       <Filter>imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="Delete.h">
+      <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

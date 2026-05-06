@@ -135,6 +135,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Delete.cpp" />
     <ClCompile Include="ParseFromInput.cpp" />
     <ClCompile Include="imgui\backends\imgui_impl_dx11.cpp" />
     <ClCompile Include="imgui\backends\imgui_impl_win32.cpp" />
@@ -148,6 +149,7 @@
     <ClCompile Include="WriteToFiles.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Delete.h" />
     <ClInclude Include="imgui\imgui.h" />
     <ClInclude Include="ParseFromInput.h" />
     <ClInclude Include="CudaynamicsDirectory.h" />
