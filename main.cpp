@@ -400,6 +400,7 @@ int main(int, char**)
         else if (deleteButton_clicked) {
             if (ImGui::Button("Back to menu")) {
                 deleteButton_clicked = false;
+                deletionList.clear();
                 current_item = -1;
             }
             ImGui::SameLine();
