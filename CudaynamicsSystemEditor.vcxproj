@@ -153,8 +153,16 @@
     <ClInclude Include="imgui\imgui.h" />
     <ClInclude Include="ParseFromInput.h" />
     <ClInclude Include="CudaynamicsDirectory.h" />
+    <ClInclude Include="resource.h" />
     <ClInclude Include="SystemStruct.h" />
     <ClInclude Include="WriteToFiles.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Resource.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="icon.ico" />
+    <Image Include="icon1.ico" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
