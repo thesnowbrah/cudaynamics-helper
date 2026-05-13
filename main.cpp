@@ -250,6 +250,24 @@ int main(int, char**)
             ImGui::Text(" ");
 
             for (int i = 0; i < varAmount; i++) {
+                if (i != 0) {
+                    ImGui::PushID(i);
+                    if (ImGui::Button(("/\\"))) {
+                        std::string tempSTR = varNames[i];
+                        varNames[i] = varNames[i-1];
+                        varNames[i - 1] = tempSTR;
+
+                        tempSTR = varEqs[i];
+                        varEqs[i] = varEqs[i-1];
+                        varEqs[i - 1] = tempSTR;
+
+                        bool tempBool = isDerivative[i];
+                        isDerivative[i] = isDerivative[i - 1];
+                        isDerivative[i - 1] = tempBool;
+                    }
+                    ImGui::PopID();
+                }
+                ImGui::SameLine();
                 bool isSignal;
                 if (isDerivative[i] == true) {
                     std::string labelText = "Diff. Eq-n of Variable " + std::to_string(i + 1) + ":";
@@ -296,7 +314,26 @@ int main(int, char**)
                 }
                 ImGui::PopID();
 
-                ImGui::Text("       ");
+                if (i != varAmount - 1) {
+                    ImGui::PushID(i);
+                    if (ImGui::Button(("\\/"))) {
+                        std::string tempSTR = varNames[i];
+                        varNames[i] = varNames[i + 1];
+                        varNames[i + 1] = tempSTR;
+
+                        tempSTR = varEqs[i];
+                        varEqs[i] = varEqs[i + 1];
+                        varEqs[i + 1] = tempSTR;
+
+                        bool tempBool = isDerivative[i];
+                        isDerivative[i] = isDerivative[i + 1];
+                        isDerivative[i + 1] = tempBool;
+                    }
+                    ImGui::PopID();
+                    ImGui::SameLine();
+                }
+                
+                ImGui::Text("    ");
                 ImGui::SameLine();
                 inputID = "Is Signal##" + std::to_string(i);
                 ImGui::Checkbox(inputID.c_str(), &isSignal);
@@ -310,6 +347,8 @@ int main(int, char**)
                 bool tmpbool = isDerivative[i];
                 ImGui::Checkbox(inputID.c_str(), &tmpbool);
                 isDerivative[i] = tmpbool;
+
+                
 
                 ImGui::Text(" ");
             }
