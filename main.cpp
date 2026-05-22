@@ -266,8 +266,9 @@ int main(int, char**)
                         isDerivative[i - 1] = tempBool;
                     }
                     ImGui::PopID();
+                    ImGui::SameLine();
                 }
-                ImGui::SameLine();
+                
                 bool isSignal;
                 if (isDerivative[i] == true) {
                     std::string labelText = "Diff. Eq-n of Variable " + std::to_string(i + 1) + ":";
@@ -477,7 +478,7 @@ int main(int, char**)
                 ImGui::SameLine();
                 ImGui::SameLine();
                 if (ImGui::Button("Add to delete list")) {
-                    if (std::find(deletionList.begin(), deletionList.end(), current_item) == deletionList.end()) {
+                    if (std::find(deletionList.begin(), deletionList.end(), current_item) == deletionList.end() && current_item != -1) {
                         deletionList.push_back(current_item);
                     }
                     current_item = -1;
