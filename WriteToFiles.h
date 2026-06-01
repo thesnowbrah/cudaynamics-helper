@@ -17,5 +17,7 @@ void WriteToVCXPROJFile(systemStruct systemData, std::filesystem::path cudaynami
 std::string ChangeEqsToKernelExplicitEuler(systemStruct systemData, std::string original);
 std::string ChangeEqsToKernelDopri(systemStruct systemData, std::string original);
 std::string ChangeEqsToKernelExplicitMidpoint(systemStruct systemData, std::string original);
+std::string ChangeEqsToKernelExplicitMidpointForTMP(systemStruct systemData, std::string original, int eqNum);
 std::string ChangeEqsToKernelSemiExplicit(systemStruct systemData, std::string original, int eqNum);
+std::string ChangeEqsToKernelSemiExplicitForTMP(systemStruct systemData, std::string original, int eqNum);
 std::string ChangeEqsToSolveImplicitness(systemStruct systemData, std::string original, bool* simpleIterations, int eqNum);

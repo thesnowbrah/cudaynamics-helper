@@ -344,7 +344,7 @@ void WriteCuFile(systemStruct systemData, std::filesystem::path cudaynamicsPath)
 
 				else if (systemData.varEqs[i] != "signal") {
 					if (systemData.isDerivative[i])OutputTXT << "        numb " << systemData.varNames[i] << "mp = V(" << systemData.varNames[i] << ")" << " + (numb)0.5 * H * (" << ChangeEqsToKernelExplicitEuler(systemData, systemData.varEqs[i]) << ");\n";
-					
+					else  if (systemData.varEqs[i] != "signal") OutputTXT << "        numb" << systemData.varNames[i] << "mp = " << ChangeEqsToKernelSemiExplicitForTMP(systemData, systemData.varEqs[i], i) << ";\n";
 				}
 			}
 
@@ -407,6 +407,7 @@ void WriteCuFile(systemStruct systemData, std::filesystem::path cudaynamicsPath)
 			for (int i = 0; i < systemData.varNames.size(); i++) {
 				if (systemData.varEqs[i] != "signal") {
 					if (systemData.isDerivative[i]) OutputTXT << "        numb " << systemData.varNames[i] << "mp = V(" << systemData.varNames[i] << ")" << " + (numb)0.5 * H * k" << systemData.varNames[i] << "1;\n";
+					else OutputTXT << "        numb" << systemData.varNames[i] << "mp = " << ChangeEqsToKernelSemiExplicitForTMP(systemData, systemData.varEqs[i], i) << ";\n";
 				}
 			}
 			OutputTXT << "\n";
@@ -438,6 +439,7 @@ void WriteCuFile(systemStruct systemData, std::filesystem::path cudaynamicsPath)
 			for (int i = 0; i < systemData.varNames.size(); i++) {
 				if (systemData.varEqs[i] != "signal") {
 					if (systemData.isDerivative[i])OutputTXT << "        " << systemData.varNames[i] << "mp = V(" << systemData.varNames[i] << ")" << " + (numb)0.5 * H * k" << systemData.varNames[i] << "2;\n";
+					else OutputTXT << "        " << systemData.varNames[i] << "mp = " << ChangeEqsToKernelExplicitMidpointForTMP(systemData, systemData.varEqs[i], i) << ";\n";
 				}
 			}
 			OutputTXT << "\n";
@@ -451,6 +453,7 @@ void WriteCuFile(systemStruct systemData, std::filesystem::path cudaynamicsPath)
 			for (int i = 0; i < systemData.varNames.size(); i++) {
 				if (systemData.varEqs[i] != "signal") {
 					if (systemData.isDerivative[i])OutputTXT << "        " << systemData.varNames[i] << "mp = V(" << systemData.varNames[i] << ")" << " + H * k" << systemData.varNames[i] << "3;\n";
+					else OutputTXT << "        " << systemData.varNames[i] << "mp = " << ChangeEqsToKernelExplicitMidpointForTMP(systemData, systemData.varEqs[i], i) << ";\n";
 				}
 			}
 			OutputTXT << "\n";
@@ -488,6 +491,8 @@ void WriteCuFile(systemStruct systemData, std::filesystem::path cudaynamicsPath)
 						<< " + k" << systemData.varNames[i] << "4) / (numb)6.0" << ";\n";
 					else  if (systemData.varEqs[i] != "signal")
 						OutputTXT << "        Vnext(" << systemData.varNames[i] << ") = " << ChangeEqsToKernelSemiExplicit(systemData, systemData.varEqs[i], i)<<";\n";
+					else
+						OutputTXT << "        " << systemData.varNames[i] << "mp = " << ChangeEqsToKernelSemiExplicit(systemData, systemData.varEqs[i], i) << ";\n";
 				}
 			}
 
@@ -828,7 +833,7 @@ std::string ChangeEqsToKernelExplicitMidpoint(systemStruct systemData, std::stri
 								result += "Vnext("; result += tempStr; result += ")"; varOrParFound = true; break;
 							}
 							else if (!systemData.isDerivative[var]) {
-								result += "V("; result += tempStr; result += ")"; varOrParFound = true; break;
+								 result += tempStr; result += "mp"; varOrParFound = true; break;
 							}
 							else {
 								result += tempStr; result += "mp"; varOrParFound = true; break;
@@ -860,7 +865,79 @@ std::string ChangeEqsToKernelExplicitMidpoint(systemStruct systemData, std::stri
 							result += "Vnext("; result += tempStr; result += ")"; varOrParFound = true; break;
 						}
 						else if (!systemData.isDerivative[var]) {
-							result += "V("; result += tempStr; result += ")"; varOrParFound = true; break;
+							result += tempStr; result += "mp"; varOrParFound = true; break;
+						}
+						else {
+							result += tempStr; result += "mp"; varOrParFound = true; break;
+						}
+					}
+				}
+				for (int par = 0; par < systemData.parameters.size(); par++) {
+					if (tempStr == systemData.parameters[par]) {
+						result += "P("; result += tempStr; result += ")"; varOrParFound = true; break;
+					}
+				}
+				if (!varOrParFound) {
+					result += tempStr;
+				}
+				else varOrParFound = false;
+			}
+
+		}
+	}
+
+	return result;
+}
+
+std::string ChangeEqsToKernelExplicitMidpointForTMP(systemStruct systemData, std::string original, int eqNum) {
+	std::string result = "";
+	bool nameOrFunc = false;
+	bool varOrParFound = false;
+	std::string tempStr = "";
+	for (int i = 0; i < original.size(); i++) {
+		if (original[i] < 48 || (original[i] >= 48 && original[i] <= 57 && !nameOrFunc) || (original[i] <= 64 && original[i] >= 58) || (original[i] > 122)) {
+
+			if (nameOrFunc) {
+				if (tempStr != "") {
+					for (int var = 0; var < systemData.varNames.size(); var++) {
+						if (tempStr == systemData.varNames[var]) {
+							if (systemData.varEqs[var] == "signal") {
+								result += "Vnext("; result += tempStr; result += ")"; varOrParFound = true; break;
+							}
+							else if (!systemData.isDerivative[var]) {
+								result += tempStr; result += "mp"; varOrParFound = true; break;
+							}
+							else {
+								result += tempStr; result += "mp"; varOrParFound = true; break;
+							}
+						}
+					}
+					for (int par = 0; par < systemData.parameters.size(); par++) {
+						if (tempStr == systemData.parameters[par]) {
+							result += "P("; result += tempStr; result += ")"; varOrParFound = true; break;
+						}
+					}
+				}
+				if (!varOrParFound) {
+					result += tempStr;
+				}
+				else varOrParFound = false;
+				nameOrFunc = false;
+				tempStr = "";
+			}
+			result += original[i];
+		}
+		else if (original[i] >= 48 && original[i] <= 57 && nameOrFunc || (original[i] >= 65 && original[i] <= 90) || (original[i] >= 97 && original[i] <= 122)) {
+			nameOrFunc = true;
+			tempStr += original[i];
+			if (i == original.size() - 1) {
+				for (int var = 0; var < systemData.varNames.size(); var++) {
+					if (tempStr == systemData.varNames[var]) {
+						if (systemData.varEqs[var] == "signal") {
+							result += "Vnext("; result += tempStr; result += ")"; varOrParFound = true; break;
+						}
+						else if (!systemData.isDerivative[var]) {
+							result += tempStr; result += "mp"; varOrParFound = true; break;
 						}
 						else {
 							result += tempStr; result += "mp"; varOrParFound = true; break;
@@ -930,6 +1007,72 @@ std::string ChangeEqsToKernelSemiExplicit(systemStruct systemData, std::string o
 						}
 						else {
 							result += "Vnext("; result += tempStr; result += ")"; varOrParFound = true; break;
+						}
+					}
+				}
+				for (int par = 0; par < systemData.parameters.size(); par++) {
+					if (tempStr == systemData.parameters[par]) {
+						result += "P("; result += tempStr; result += ")"; varOrParFound = true; break;
+					}
+				}
+				if (!varOrParFound) {
+					result += tempStr;
+				}
+				else varOrParFound = false;
+			}
+
+		}
+	}
+
+	return result;
+}
+
+std::string ChangeEqsToKernelSemiExplicitForTMP(systemStruct systemData, std::string original, int eqNum) {
+	std::string result = "";
+	bool nameOrFunc = false;
+	bool varOrParFound = false;
+	std::string tempStr = "";
+	for (int i = 0; i < original.size(); i++) {
+		if (original[i] < 48 || (original[i] >= 48 && original[i] <= 57 && !nameOrFunc) || (original[i] <= 64 && original[i] >= 58) || (original[i] > 122)) {
+
+			if (nameOrFunc) {
+				if (tempStr != "") {
+					for (int var = 0; var < systemData.varNames.size(); var++) {
+						if (tempStr == systemData.varNames[var]) {
+							if (var >= eqNum || !systemData.isDerivative[var] && systemData.varEqs[var] != "signal") {
+								result += "V("; result += tempStr; result += ")"; varOrParFound = true; break;
+							}
+							else {
+								result += tempStr; result += "mp"; varOrParFound = true; break;
+							}
+						}
+					}
+					for (int par = 0; par < systemData.parameters.size(); par++) {
+						if (tempStr == systemData.parameters[par]) {
+							result += "P("; result += tempStr; result += ")"; varOrParFound = true; break;
+						}
+					}
+				}
+				if (!varOrParFound) {
+					result += tempStr;
+				}
+				else varOrParFound = false;
+				nameOrFunc = false;
+				tempStr = "";
+			}
+			result += original[i];
+		}
+		else if (original[i] >= 48 && original[i] <= 57 && nameOrFunc || (original[i] >= 65 && original[i] <= 90) || (original[i] >= 97 && original[i] <= 122)) {
+			nameOrFunc = true;
+			tempStr += original[i];
+			if (i == original.size() - 1) {
+				for (int var = 0; var < systemData.varNames.size(); var++) {
+					if (tempStr == systemData.varNames[var]) {
+						if (var >= eqNum || !systemData.isDerivative[var] && systemData.varEqs[var] != "signal") {
+							result += "V("; result += tempStr; result += ")"; varOrParFound = true; break;
+						}
+						else {
+							 result += tempStr; result += "mp"; varOrParFound = true; break;
 						}
 					}
 				}
